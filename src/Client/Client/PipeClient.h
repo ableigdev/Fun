@@ -50,7 +50,7 @@ public:
 			Попытка подключения к каналу
 			*/
 
-			hPipe = CreateFile(PipeName,
+			hPipe = CreateFile((wchar_t*)PipeName,
 				GENERIC_WRITE,
 				0,
 				NULL,
@@ -68,7 +68,7 @@ public:
 					освобождения (в случае неудачности ожидания   выход) и переход на повторное подключение
 					*/
 
-					if (!WaitNamedPipe(PipeName, WaitInfinite ? NMPWAIT_WAIT_FOREVER : NMPWAIT_USE_DEFAULT_WAIT))
+					if (!WaitNamedPipe((wchar_t*)PipeName, WaitInfinite ? NMPWAIT_WAIT_FOREVER : NMPWAIT_USE_DEFAULT_WAIT))
 						return false;
 				}
 				else
