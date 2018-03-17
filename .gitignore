@@ -4,6 +4,7 @@
 *.sdf
 *.opensdf
 *.VC.db
+*.VC.VC.opendb
 
 # Any user files
 *.user
