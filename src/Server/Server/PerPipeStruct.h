@@ -7,7 +7,8 @@
 
 #define	NELEM	3
 
-template <template T> class PerPipeStruct
+template <typename T> 
+class PerPipeStruct
 {
 private:
 
@@ -62,12 +63,12 @@ public:
 
 	//---------------------------------------------------------------
 
-	friend ostream& operator << (ostream &os, PerPipeStruct &Val);
+	friend std::ostream& operator << (std::ostream &os, PerPipeStruct &Val);
 };
 
 //-----------------------------------------------------------------------
 
-template <template T> ostream& operator << (ostream &os, PerPipeStruct<T> &Val)
+template <typename T> std::ostream& operator << (std::ostream &os, PerPipeStruct<T> &Val)
 {
 	if (Val.ControlInd > 0)
 	{

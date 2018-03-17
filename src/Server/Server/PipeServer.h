@@ -20,7 +20,7 @@
 
 //------------------------------------------------------------------
 
-template <template T> class CPipeServer
+template <typename T> class CPipeServer
 {
 	// Описание недоступных пользователю полей класса
 
@@ -168,7 +168,7 @@ public:
 	(метод WaitClient, который изменяет поле состояния канала)
 	*/
 
-	DWORD CreatePipeAndWaitClient(char *PipeName, HANDLE hEvent, bool ByteMode = true, DWORD BufSize = DEF_BUF_SIZE, DWORD DefWaitTime = DEF_WAIT_TIME)
+	DWORD CreatePipeAndWaitClient(wchar_t *PipeName, HANDLE hEvent, bool ByteMode = true, DWORD BufSize = DEF_BUF_SIZE, DWORD DefWaitTime = DEF_WAIT_TIME)
 	{
 		if (hEvent)
 		{

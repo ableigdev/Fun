@@ -5,7 +5,8 @@
 template <typename INF, typename LISTTYPE> class Iterator;
 
 // Шаблонный класс для работы с однонаправленным списком
-template <typename INF> class TList
+template <typename INF> 
+class TList
 {
 	friend	class Iterator <INF, TList<INF > >;
 
@@ -115,7 +116,7 @@ public:
 		Tail = NULL;
 	}
 
-	friend ostream& operator << (ostream &os, TList &List);
+	friend std::ostream& operator << (std::ostream &os, TList &List);
 
 };
 
@@ -123,7 +124,8 @@ public:
 //-----------------------------------------------------------------------
 
 
-template <typename INF> ostream& operator << (ostream &os, TList<INF> &List)
+template <typename INF> 
+std::ostream& operator << (std::ostream &os, TList<INF> &List)
 {
 	INF *Val = NULL;
 
@@ -138,10 +140,11 @@ template <typename INF> ostream& operator << (ostream &os, TList<INF> &List)
 
 //-----------------------------------------------------------------------
 
-template <typename INF, class LISTTYPE> class Iterator
+template <typename INF, typename LISTTYPE> 
+class Iterator
 {
-	LISTTYPE::ListElem **Head, **Tail, *CurPos;
-
+	typename LISTTYPE::ListElem **Head, **Tail, *CurPos;
+	
 public:
 
 	Iterator()
