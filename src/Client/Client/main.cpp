@@ -4,11 +4,13 @@
 #include <string.h>
 #include <conio.h>
 #include <iostream>
+#include <string>
 
 #include "PipeClient.h"
 
 #define	PIPE_NAME_PREFIX	"\\\\"
 #define	PIPE_NAME			"\\pipe\\pipe_example"
+#define MAX_LOG_PASS_LENGTH 50
 
 //------------------------------------------------
 
@@ -23,20 +25,18 @@ template <class T> T get_start(T Value, T Divider)
 
 int main()
 {
-	unsigned StartVal, EndVal, Divider;
+	char* login = new char[MAX_LOG_PASS_LENGTH];
+	char* password = new char[MAX_LOG_PASS_LENGTH];
 
 	SetConsoleOutputCP(1251);
 
-	std::cout << "Введите начальное значение: ";
-	std::cin >> StartVal;
+	std::cout << "Введите логин: ";
+	std::cin >> login;
 
-	std::cout << "Введите конечное значение: ";
-	std::cin >> EndVal;
+	std::cout << "Введите пароль: ";
+	std::cin >> password;
 
-	std::cout << "Введите делитель, на который числа должны делиться без остатка: ";
-	std::cin >> Divider;
-
-	CPipeClient<unsigned> PC;
+	CPipeClient<char*> PC;
 	char *ServerName = new char[MAX_PATH], *PipeName = new char[MAX_PATH];
 	
 	std::cout << "Введите имя сервера (. - для локального компьютера): ";
@@ -47,21 +47,11 @@ int main()
 	if (PC.ConnectPipe(PipeName))
 	{
 		PC.InitMessageMode();
-		StartVal = get_start(StartVal, Divider);
-		if (PC.WriteMessage(StartVal) && PC.WriteMessage(EndVal) && PC.WriteMessage(Divider))
+		if (!(PC.WriteMessage(login) && PC.WriteMessage(password)))
 		{
-			for (; StartVal <= EndVal; StartVal += Divider)
-			{
-				if (!PC.WriteMessage(StartVal))
-				{
-					std::cout << "Ошибка записи в именованный канал!\n";
-					break;
-				}
-			}
-		}
-		else
 			std::cout << "Ошибка записи в именованный канал!\n";
-
+		}
+			
 		std::cout << "Нажмите любую клавишу для завершения программы (выполнится отключение от именованного канала " << PipeName << ")\n";
 	}
 	else

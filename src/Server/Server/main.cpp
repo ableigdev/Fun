@@ -26,12 +26,12 @@ int main()
 
 
 	HANDLE hEvents[MAX_PIPE_INST];
-	PerPipeStruct<unsigned> PipeInfo[MAX_PIPE_INST];
-	CPipeServer<unsigned> Pipes[MAX_PIPE_INST];
+	PerPipeStruct<char*> PipeInfo[MAX_PIPE_INST];
+	CPipeServer<char*> Pipes[MAX_PIPE_INST];
 	char *FName = new char[MAX_PATH], answer;
 	std::ofstream file;
 	DWORD PipeNumber, NBytesRead;
-	unsigned Message;
+	char* Message = new char[100];
 	int PipesConnect = 0;
 
 	SetConsoleOutputCP(1251);

@@ -20,7 +20,8 @@
 
 //------------------------------------------------------------------
 
-template <typename T> class CPipeServer
+template <typename T> 
+class CPipeServer
 {
 	// ќписание недоступных пользователю полей класса
 

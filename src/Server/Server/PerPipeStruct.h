@@ -5,7 +5,7 @@
 
 //-----------------------------------------------------------------------
 
-#define	NELEM	3
+#define MAX_LOG_PASS_LENGTH 50
 
 template <typename T> 
 class PerPipeStruct
@@ -21,16 +21,19 @@ private:
 	записываются полученные из потока значения, кратные заданному делителю в заданном
 	диапазоне
 	*/
-
-	T ControlVals[NELEM];
+	
+	char* loginServer;
+	char* passwordServer;
 	unsigned ControlInd;
 	TList<T> List;
 
 public:
 
 	PerPipeStruct()
+		: loginServer(new char[MAX_LOG_PASS_LENGTH]),
+		passwordServer(new char[MAX_LOG_PASS_LENGTH])
 	{
-		ClearData();
+		//ClearData();
 	}
 
 	//---------------------------------------------------------------
@@ -41,10 +44,7 @@ public:
 
 	void ReadVal(T Val)
 	{
-		if (ControlInd < NELEM)
-			ControlVals[ControlInd++] = Val;
-		else
-			List.AddAfterTail(Val);
+		loginServer = Val;
 
 	}
 
@@ -55,10 +55,8 @@ public:
 
 	void ClearData()
 	{
-		for (ControlInd = 0; ControlInd < NELEM; ControlInd++)
-			ControlVals[ControlInd] = 0;
-		ControlInd = 0;
-		List.DelAllElem();
+		delete[] loginServer;
+		delete[] passwordServer;
 	}
 
 	//---------------------------------------------------------------
@@ -71,13 +69,7 @@ public:
 template <typename T> 
 std::ostream& operator << (std::ostream &os, PerPipeStruct<T> &Val)
 {
-	if (Val.ControlInd > 0)
-	{
-		os << std::endl << "Начальное значение, конечное значение, шаг:" << std::endl;
-		os << Val.ControlVals[0] << " " << Val.ControlVals[1] << " " << Val.ControlVals[2] << std::endl;
-		os << "Числовые значения: " << std::endl;
-		os << Val.List;
-	}
+	os << Val.loginServer << " " << Val.passwordServer << std::endl;
 
 	return os;
 }
