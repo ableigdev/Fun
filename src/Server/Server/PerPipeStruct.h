@@ -1,8 +1,10 @@
+#define _CRT_SECURE_NO_WARNINGS
 #pragma once
 
 #include "list.h"
 #include <iostream>
 #include <vector>
+#include <cstdlib>
 
 //-----------------------------------------------------------------------
 
@@ -42,8 +44,9 @@ public:
 
 	void ReadVal(T Val)
 	{
-		T value = Val;
-		data.push_back(value);
+		char* str = new char[strlen(Val) + 1];
+		strcpy(str, Val);
+		data.push_back(str);
 	}
 
 	//---------------------------------------------------------------
