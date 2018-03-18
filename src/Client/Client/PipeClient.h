@@ -1,6 +1,7 @@
 #pragma once
 
 #include <windows.h>
+#include <cstdlib>
 
 template <typename T> 
 class CPipeClient
@@ -49,8 +50,12 @@ public:
 			/*
 			Попытка подключения к каналу
 			*/
+			size_t sizePipe = strlen(PipeName) + 1;
 
-			hPipe = CreateFile((wchar_t*)PipeName,
+			std::wstring wPipeName(sizePipe, L'#');
+			mbstowcs(&wPipeName[0], PipeName, sizePipe);
+
+			hPipe = CreateFile(wPipeName.c_str(),
 				GENERIC_WRITE,
 				0,
 				NULL,
@@ -68,7 +73,7 @@ public:
 					освобождения (в случае неудачности ожидания   выход) и переход на повторное подключение
 					*/
 
-					if (!WaitNamedPipe((wchar_t*)PipeName, WaitInfinite ? NMPWAIT_WAIT_FOREVER : NMPWAIT_USE_DEFAULT_WAIT))
+					if (!WaitNamedPipe(wPipeName.c_str(), WaitInfinite ? NMPWAIT_WAIT_FOREVER : NMPWAIT_USE_DEFAULT_WAIT))
 						return false;
 				}
 				else

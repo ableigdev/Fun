@@ -46,7 +46,7 @@ int main()
 
 	if (PC.ConnectPipe(PipeName))
 	{
-		//PC.InitMessageMode();
+		PC.InitMessageMode();
 		StartVal = get_start(StartVal, Divider);
 		if (PC.WriteMessage(StartVal) && PC.WriteMessage(EndVal) && PC.WriteMessage(Divider))
 		{
