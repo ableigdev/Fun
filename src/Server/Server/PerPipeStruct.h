@@ -62,19 +62,20 @@ public:
 	}
 
 	//---------------------------------------------------------------
-
-	friend std::ostream& operator << (std::ostream &os, PerPipeStruct &Val);
+	template <typename T>
+	friend std::ostream& operator << (std::ostream &os, PerPipeStruct<T> &Val);
 };
 
 //-----------------------------------------------------------------------
 
-template <typename T> std::ostream& operator << (std::ostream &os, PerPipeStruct<T> &Val)
+template <typename T> 
+std::ostream& operator << (std::ostream &os, PerPipeStruct<T> &Val)
 {
 	if (Val.ControlInd > 0)
 	{
-		os << endl << "Начальное значение, конечное значение, шаг:" << endl;
-		os << Val.ControlVals[0] << " " << Val.ControlVals[1] << " " << Val.ControlVals[2] << endl;
-		os << "Числовые значения: " << endl;
+		os << std::endl << "Начальное значение, конечное значение, шаг:" << std::endl;
+		os << Val.ControlVals[0] << " " << Val.ControlVals[1] << " " << Val.ControlVals[2] << std::endl;
+		os << "Числовые значения: " << std::endl;
 		os << Val.List;
 	}
 

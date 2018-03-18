@@ -116,7 +116,8 @@ public:
 		Tail = NULL;
 	}
 
-	friend std::ostream& operator << (std::ostream &os, TList &List);
+	template <typename INF>
+	friend std::ostream& operator << (std::ostream &os, TList<INF> &List);
 
 };
 
@@ -132,7 +133,7 @@ std::ostream& operator << (std::ostream &os, TList<INF> &List)
 	for (TList<INF>::IteratorTList It = List; !It; ++It)
 	{
 		It.GetCurInf(Val);
-		os << *Val << endl;
+		os << *Val << std::endl;
 	}
 
 	return os;

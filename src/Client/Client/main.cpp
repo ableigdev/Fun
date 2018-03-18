@@ -70,7 +70,7 @@ int main()
 	delete[]ServerName;
 	delete[]PipeName;
 
-	std::cin.get();
+	system("pause");
 
 	return 0;
 }

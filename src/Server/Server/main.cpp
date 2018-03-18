@@ -173,7 +173,8 @@ int main()
 						отключение клиента со стороны сервера и запуск ожидания подключения нового клиента
 						*/
 
-					case PIPE_LOST_CONNECT:		//file << PipeInfo[PipeNumber];
+					case PIPE_LOST_CONNECT:		
+						file << PipeInfo[PipeNumber];
 						std::cout << "Testing Message. File Write" << std::endl;
 						PipeInfo[PipeNumber].ClearData();
 						if (PipesConnect > 0)
