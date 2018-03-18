@@ -132,46 +132,46 @@ int main()
 							PipesConnect++;
 						}
 
-												if (Pipes[PipeNumber].ReadMessage(Message))
-												{
-													/*
-													Если завершена асинхронная операция чтения, то проверка состояния операции
-													*/
+						if (Pipes[PipeNumber].ReadMessage(Message))
+						{
+							/*
+							Если завершена асинхронная операция чтения, то проверка состояния операции
+							*/
 
-													switch (Pipes[PipeNumber].GetOperState())
-													{
-														/*
-														Если прочитаны не все данные сообщения, то запуск повторного чтения
-														*/
+							switch (Pipes[PipeNumber].GetOperState())
+							{
+								/*
+								Если прочитаны не все данные сообщения, то запуск повторного чтения
+								*/
 
-													case PIPE_READ_PART:		Pipes[PipeNumber].ReadMessage(Message);
-														std::cout << "Testing Message. Reading data part" << std::endl;
-														break;
+							case PIPE_READ_PART:		Pipes[PipeNumber].ReadMessage(Message);
+								std::cout << "Testing Message. Reading data part" << std::endl;
+								break;
 
-														/*
-														Если чтение сообщения завершено успешно, то обработка полученного значения
-														*/
+								/*
+								Если чтение сообщения завершено успешно, то обработка полученного значения
+								*/
 
-													case PIPE_READ_SUCCESS:		PipeInfo[PipeNumber].ReadVal(Message);
-														std::cout << "Testing Message. Reading data" << std::endl;
-														break;
+							case PIPE_READ_SUCCESS:		PipeInfo[PipeNumber].ReadVal(Message);
+								std::cout << "Testing Message. Reading data" << std::endl;
+								break;
 
-														/*
-														Произошла ошибка чтения
-														*/
-													case PIPE_OPERATION_ERROR:	std::cout << "Ошибка при чтении данных из канала (код ошибки: " << GetLastError() << ")!" << std::endl;
-														break;
+								/*
+								Произошла ошибка чтения
+								*/
+							case PIPE_OPERATION_ERROR:	std::cout << "Ошибка при чтении данных из канала (код ошибки: " << GetLastError() << ")!" << std::endl;
+								break;
 
-													}
-													break;
-												}
-												//break;
+							}
+							break;
+						}
+						//break;
 
-												/*
-												Отключение клиента. В этом случае происходит вывод данных, прочитанных из канала в файл и
-												их очистка в структуре данных, уменьшения количество подключенных клиентов на 1,
-												отключение клиента со стороны сервера и запуск ожидания подключения нового клиента
-												*/
+						/*
+						Отключение клиента. В этом случае происходит вывод данных, прочитанных из канала в файл и
+						их очистка в структуре данных, уменьшения количество подключенных клиентов на 1,
+						отключение клиента со стороны сервера и запуск ожидания подключения нового клиента
+						*/
 
 					case PIPE_LOST_CONNECT:		//file << PipeInfo[PipeNumber];
 						std::cout << "Testing Message. File Write" << std::endl;
