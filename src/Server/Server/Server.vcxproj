@@ -19,7 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="list.h" />
     <ClInclude Include="PerPipeStruct.h" />
     <ClInclude Include="PipeServer.h" />
   </ItemGroup>

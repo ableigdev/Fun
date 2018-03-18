@@ -1,7 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #pragma once
 
-#include "list.h"
 #include <iostream>
 #include <vector>
 #include <cstdlib>
@@ -26,8 +25,6 @@ private:
 	*/
 	
 	std::vector<T> data;
-	unsigned ControlInd;
-	TList<T> List;
 
 public:
 
