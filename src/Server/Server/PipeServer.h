@@ -316,7 +316,7 @@ public:
 		{
 
 
-			if (ReadFile(hPipe, (LPVOID)(&Message), sizeof(T), &NBytesRead, &Overl) == TRUE)
+			if (ReadFile(hPipe, Message, 100, &NBytesRead, &Overl) == TRUE)
 			{
 				/*
 				јсинхронное чтение завершено, следовательно, изменение состо€ни€ операции в именованном
@@ -324,7 +324,7 @@ public:
 				*/
 				CanCloseFlag = true;
 
-				PipeCurOperState = NBytesRead == sizeof(T) ? PIPE_READ_SUCCESS : PIPE_READ_PART;
+				PipeCurOperState = NBytesRead == 100 ? PIPE_READ_SUCCESS : PIPE_READ_PART;
 				fPendingIOComplete = false;
 				return true;
 			}

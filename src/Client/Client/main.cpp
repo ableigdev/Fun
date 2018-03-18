@@ -12,17 +12,6 @@
 #define	PIPE_NAME			"\\pipe\\pipe_example"
 #define MAX_LOG_PASS_LENGTH 50
 
-//------------------------------------------------
-
-template <class T> T get_start(T Value, T Divider)
-{
-	T Rem = Value % Divider;
-
-	return Rem == 0 ? Value : Value + Divider - Rem;
-}
-
-//------------------------------------------------
-
 int main()
 {
 	char* login = new char[MAX_LOG_PASS_LENGTH];
@@ -35,6 +24,9 @@ int main()
 
 	std::cout << "¬ведите пароль: ";
 	std::cin >> password;
+
+	login[strlen(login) + 1] = '\0';
+	password[strlen(password) + 1] = '\0';
 
 	CPipeClient<char*> PC;
 	char *ServerName = new char[MAX_PATH], *PipeName = new char[MAX_PATH];
@@ -59,6 +51,9 @@ int main()
 
 	delete[]ServerName;
 	delete[]PipeName;
+
+	delete[] login;
+	delete[] password;
 
 	system("pause");
 

@@ -115,7 +115,7 @@ public:
 		if (IsPipeConnected())
 		{
 			DWORD NBWr;
-			return WriteFile(hPipe, (LPVOID)(&Message), sizeof(Message), &NBWr, NULL) == TRUE;
+			return WriteFile(hPipe, (LPCSTR)(Message), 100, &NBWr, NULL) == TRUE;
 		}
 		return false;
 	}

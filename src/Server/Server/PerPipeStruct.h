@@ -2,6 +2,7 @@
 
 #include "list.h"
 #include <iostream>
+#include <vector>
 
 //-----------------------------------------------------------------------
 
@@ -22,16 +23,13 @@ private:
 	диапазоне
 	*/
 	
-	char* loginServer;
-	char* passwordServer;
+	std::vector<T> data;
 	unsigned ControlInd;
 	TList<T> List;
 
 public:
 
 	PerPipeStruct()
-		: loginServer(new char[MAX_LOG_PASS_LENGTH]),
-		passwordServer(new char[MAX_LOG_PASS_LENGTH])
 	{
 		//ClearData();
 	}
@@ -44,8 +42,8 @@ public:
 
 	void ReadVal(T Val)
 	{
-		loginServer = Val;
-
+		T value = Val;
+		data.push_back(value);
 	}
 
 	//---------------------------------------------------------------
@@ -55,8 +53,7 @@ public:
 
 	void ClearData()
 	{
-		delete[] loginServer;
-		delete[] passwordServer;
+		data.clear();
 	}
 
 	//---------------------------------------------------------------
@@ -69,7 +66,10 @@ public:
 template <typename T> 
 std::ostream& operator << (std::ostream &os, PerPipeStruct<T> &Val)
 {
-	os << Val.loginServer << " " << Val.passwordServer << std::endl;
+	for (T x : Val.data)
+	{
+		os << x << " ";
+	}
 
 	return os;
 }
