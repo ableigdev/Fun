@@ -177,7 +177,7 @@ int main()
 						*/
 
 					case PIPE_LOST_CONNECT:		
-						std::cout << "Testing Message. File Write" << std::endl;
+						std::cout << "Testing Message. Write Response" << std::endl;
 						Pipes[PipeNumber].WriteResponse(Pipes[PipeNumber].checkUser(PipeInfo[PipeNumber].getData()));
 						PipeInfo[PipeNumber].ClearData();
 						if (PipesConnect > 0)

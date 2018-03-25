@@ -341,15 +341,6 @@ public:
 	}
 
 	//------------------------------------------------------------------
-/*
-	bool WriteMessage(T &Message) 
-	{ 
-		if (IsPipeConnected()) 
-		{ DWORD NBWr; 
-			return WriteFile(hPipe, (LPVOID)(&Message), sizeof(Message), &NBWr, NULL) == TRUE; 
-		} 
-		return false; 
-	}*/
 
 	void WriteResponse(bool Message)
 	{
