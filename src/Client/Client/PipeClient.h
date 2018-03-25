@@ -121,6 +121,19 @@ public:
 	}
 
 	//------------------------------------------------------------------
+
+	bool ReadResponse()
+	{
+		if (IsPipeConnected())
+		{
+			DWORD NBytesRead;
+			bool Message;
+
+			ReadFile(hPipe, &Message, 100, &NBytesRead, NULL);
+			return Message;
+		}
+		return false;
+	}
 	/*
 	Доступный пользователю метод, с помощью которого осуществляется проверка удачности
 	подключения к экземпляру именованного канала

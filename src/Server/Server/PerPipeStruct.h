@@ -55,6 +55,11 @@ public:
 		data.clear();
 	}
 
+	std::vector<std::basic_string<T>> getData() const
+	{
+		return data;
+	}
+
 	//---------------------------------------------------------------
 	template <typename T>
 	friend std::ostream& operator << (std::ostream&, PerPipeStruct<T>&);

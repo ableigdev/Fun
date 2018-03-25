@@ -5,7 +5,7 @@
 #include "PipeServer.h"
 #include "PerPipeStruct.h"
 
-#define MAX_PIPE_INST	2
+#define MAX_PIPE_INST	3
 #define PIPE_NAME		L"\\\\.\\pipe\\pipe_example"
 
 int main()
@@ -26,21 +26,24 @@ int main()
 
 
 	HANDLE hEvents[MAX_PIPE_INST];
+
 	PerPipeStruct<char> PipeInfo[MAX_PIPE_INST];
 	CPipeServer<char> Pipes[MAX_PIPE_INST];
-	char *FName = new char[MAX_PATH], answer;
-	std::ofstream file;
+	char *FName = new char[MAX_PATH];
+	char answer;
+	std::ifstream file;
 	DWORD PipeNumber, NBytesRead;
 	char* Message = new char[100];
 	int PipesConnect = 0;
 
 	SetConsoleOutputCP(1251);
-	std::cout << "Введите имя выходного файла: ";
+	std::cout << "Введите имя файла с логинами и паролями: ";
 	std::cin >> FName;
 
 	file.open(FName);
+	
 	if (!file)
-		std::cout << "Ошибка создания файла с именем " << FName << "!" << std::endl;
+		std::cout << "Ошибка чтения файла с именем " << FName << "!" << std::endl;
 	else
 	{
 		for (int i = 0; i < MAX_PIPE_INST; i++)
@@ -53,6 +56,7 @@ int main()
 
 			hEvents[i] = CreateEvent(NULL, TRUE, TRUE, NULL);
 			Pipes[i].CreatePipeAndWaitClient(PIPE_NAME, hEvents[i]);
+			Pipes[i].readFromDB(file);
 			if (Pipes[i].GetState() == PIPE_ERROR)
 			{
 
@@ -174,8 +178,9 @@ int main()
 						*/
 
 					case PIPE_LOST_CONNECT:		
-						file << PipeInfo[PipeNumber];
 						std::cout << "Testing Message. File Write" << std::endl;
+						Pipes[PipeNumber].WriteResponse(Pipes[PipeNumber].checkUser(PipeInfo[PipeNumber].getData()));
+						std::cout << PipeInfo[PipeNumber] << std::endl;
 						PipeInfo[PipeNumber].ClearData();
 						if (PipesConnect > 0)
 							PipesConnect--;

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <windows.h>
+#include <vector>
+#include <fstream>
 
 #define	PIPE_ERROR					-1
 #define PIPE_NOT_CONNECTED			1
@@ -66,6 +68,9 @@ class CPipeServer
 	потребовался бы запуск сервера и клиента от имени одного и того же пользователя.
 	*/
 	PSECURITY_DESCRIPTOR pSD;
+
+	std::vector<std::basic_string<T>> db_users;
+	int maxLenLog, maxLenPass;
 
 	//------------------------------------------------------------------
 
@@ -339,6 +344,18 @@ public:
 
 	//------------------------------------------------------------------
 
+	void WriteResponse(bool Message)
+	{
+		LPCVOID mes = (LPCVOID)Message;
+		if (IsOpen())
+		{
+			DWORD NBWr;
+			WriteFile(hPipe, (LPCVOID)Message, 100, &NBWr, NULL);
+		}
+	}
+
+	//------------------------------------------------------------------
+
 	/*
 	Доступный пользователю метод класса, который в случае, когда имеется валидный дескриптор
 	канала (проверяется методом IsOpen) осуществляет проверку завершения асинхронной операции
@@ -429,6 +446,39 @@ public:
 	bool CanClose()
 	{
 		return CanCloseFlag;
+	}
+
+	//------------------------------------------------------------------
+
+	bool readFromDB(std::ifstream &file)
+	{
+		if (file >> maxLenLog >> maxLenPass)
+		{ 
+			T *tmpLogin = new T[maxLenLog];
+			T *tmpPassword = new T[maxLenPass];
+			while (file >> tmpLogin >> tmpPassword)
+			{
+				db_users.push_back(tmpLogin);
+				db_users.push_back(tmpPassword);
+			}
+			delete[] tmpLogin;
+			delete[] tmpPassword;
+			return true;
+		}
+		
+		return false;
+	}
+
+	//------------------------------------------------------------------
+
+	bool checkUser(const std::vector<std::basic_string<T>> &vec)
+	{
+		for (int i = 0; i < db_users.size(); i+=2)
+		{
+			if (vec[0] == db_users[i] && vec[1] == db_users[++i])
+				return true;
+		}
+		return false;
 	}
 
 };
