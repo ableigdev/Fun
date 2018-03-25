@@ -218,7 +218,7 @@ public:
 				SECURITY_ATTRIBUTES sa = { sizeof(sa), pSD, true };
 
 				hPipe = CreateNamedPipe(PipeName,
-					PIPE_ACCESS_INBOUND | FILE_FLAG_OVERLAPPED,
+					PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
 					ByteMode ? PIPE_TYPE_BYTE | PIPE_READMODE_BYTE : PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE,
 					PIPE_UNLIMITED_INSTANCES,
 					BufSize,
@@ -319,9 +319,7 @@ public:
 
 		if (IsOpen())
 		{
-
-
-			if (ReadFile(hPipe, Message, 100, &NBytesRead, &Overl) == TRUE)
+			if (ReadFile(hPipe, (LPVOID)Message, 100, &NBytesRead, &Overl) == TRUE)
 			{
 				/*
 				Асинхронное чтение завершено, следовательно, изменение состояния операции в именованном
@@ -343,13 +341,24 @@ public:
 	}
 
 	//------------------------------------------------------------------
+/*
+	bool WriteMessage(T &Message) 
+	{ 
+		if (IsPipeConnected()) 
+		{ DWORD NBWr; 
+			return WriteFile(hPipe, (LPVOID)(&Message), sizeof(Message), &NBWr, NULL) == TRUE; 
+		} 
+		return false; 
+	}*/
 
 	void WriteResponse(bool Message)
 	{
 		if (IsOpen())
 		{
-			DWORD NBWr;
-			WriteFile(hPipe, (LPCVOID)Message, 100, &NBWr, NULL);
+			DWORD NBWr; 
+
+			if (!WriteFile(hPipe, &Message, 1, &NBWr, NULL))
+				std::cout << "Ошибка записи в канал " << GetLastError();
 		}
 	}
 
@@ -378,7 +387,6 @@ public:
 			}
 			else
 				CanCloseFlag = true;
-
 
 			fPendingIOComplete = true;
 			return true;
@@ -472,11 +480,12 @@ public:
 
 	bool checkUser(const std::vector<std::basic_string<T>> &vec)
 	{
-		for (int i = 0; i < db_users.size(); i+=2)
-		{
-			if (vec[0] == db_users[i] && vec[1] == db_users[++i])
-				return true;
-		}
+		if (vec.size() != 0)
+			for (int i = 0; i < db_users.size(); i+=2)
+			{
+				if (vec[0] == db_users[i] && vec[1] == db_users[++i])
+					return true;
+			}
 		return false;
 	}
 

@@ -56,7 +56,7 @@ public:
 			mbstowcs(&wPipeName[0], PipeName, sizePipe);
 
 			hPipe = CreateFile(wPipeName.c_str(),
-				GENERIC_WRITE,
+				GENERIC_READ | GENERIC_WRITE,
 				0,
 				NULL,
 				OPEN_EXISTING,
@@ -128,8 +128,8 @@ public:
 		{
 			DWORD NBytesRead;
 			bool Message;
-
-			ReadFile(hPipe, &Message, 100, &NBytesRead, NULL);
+			ReadFile(hPipe, &Message, 1, &NBytesRead, NULL);
+			
 			return Message;
 		}
 		return false;
@@ -156,23 +156,22 @@ public:
 			InitMessageMode();
 			if (!(WriteMessage(login) && WriteMessage(password)))
 			{
-				std::cout << "Ошибка записи в именованный канал!\n";
+				std::cout << "\nОшибка записи в именованный канал!\n";
 			}
 
 			if (ReadResponse())
 			{
-				std::cout << "Авторизация прошла успешно!\n";
+				std::cout << "\nАвторизация прошла успешно!\n";
 			}
 			else
 			{
-				std::cout << "Неверный пароль или логин!\n";
+				std::cout << "\nНеверный пароль или логин!\n";
 			}
 
-			std::cout << "Нажмите любую клавишу для завершения программы (выполнится отключение от именованного канала " << PipeName << ")\n";
+			std::cout << "\nНажмите любую клавишу для завершения программы (выполнится отключение от именованного канала " << PipeName << ")\n";
 		}
 		else
-			std::cout << "Ошибка соединения с сервером (код ошибки: " << GetLastError() << ")! Нажмите любую клавишу для выхода\n";
-		//
+			std::cout << "\nОшибка соединения с сервером (код ошибки: " << GetLastError() << ")!\n";
 
 	}
 

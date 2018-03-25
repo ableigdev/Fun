@@ -29,13 +29,13 @@ int main()
 	std::cin >> ServerName;
 
 	CPipeClient<char*> PC;
-
+	strcat(strcat(strcpy(PipeName, PIPE_NAME_PREFIX), ServerName), PIPE_NAME);
 	
 
 	do
 	{
 		
-		std::cout << "Запустить клиента в режиме: \n"
+		std::cout << "\nЗапустить клиента в режиме: \n"
 					<< "1) Проверки связи \n"
 					<< "2) Взлома \n"
 					<< "3) Завершить работу клиента\n"
@@ -47,40 +47,31 @@ int main()
 		{
 		case 1:
 			
-			std::cout << "Введите логин: ";
+			std::cout << "\nВведите логин: ";
 			std::cin >> login;
 
 			std::cout << "Введите пароль: ";
 			std::cin >> password;
-
-			login[strlen(login) + 1] = '\0';
-			password[strlen(password) + 1] = '\0';
-
+		
+			PC.ConnectToServer(PipeName, login, password);
 			break;
 
 		case 2:
-
-			//if you don't like this "IF" construct - i can rewrite it in "SWITCH" case
-			std::cout << "Тип алфавита пароля: \n"
+			std::cout << "\nТип алфавита пароля: \n"
 				<< "1) Маленькие латинские буквы - 25 символов (по умолчанию)\n"
 				<< "2) Маленькие и большие латинские буквы + цифры - 62 символа\n"
 				<< "3) Маленькие и большие латинские цифры + цифры + маленькие и большие русские буквы - 128 символов";
 
-			
 			std::cin >> alphType;
 			if (alphType > 3 || alphType < 1)
 			{
-				std::cout << "Выбран тип по умолчанию. \n";
+				std::cout << "\nВыбран тип по умолчанию. \n";
 				alphType = 1;
 			}
 			
+			//PC.bruteForce(/*alphabet type*/ alphType
 
-			//PC.bruteForce(/*alphabet type*/ alphType);
-
-			login[strlen(login) + 1] = '\0';
-			password[strlen(password) + 1] = '\0';
-
-
+			PC.ConnectToServer(PipeName, login, password);
 			break;
 
 		case 3:
@@ -88,28 +79,17 @@ int main()
 			break;
 
 		default:
-			std::cout << "Ошибка ввода, введите еще раз.\n";
+			std::cout << "\nОшибка ввода, введите еще раз.\n";
 			break;
 		}
 
-		
-		strcat(strcat(strcpy(PipeName, PIPE_NAME_PREFIX), ServerName), PIPE_NAME);
-
-		PC.ConnectToServer(PipeName, login, password);
-
-		
-		delete[]ServerName;
-		delete[]PipeName;
-
 	} while (!menuExit);
 
-
-
+	delete[]ServerName;
+	delete[]PipeName;
 
 	delete[] login;
 	delete[] password;
-
-	system("pause");
 
 	return 0;
 }

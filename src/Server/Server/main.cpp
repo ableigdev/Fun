@@ -169,7 +169,6 @@ int main()
 							}
 							break;
 						}
-						//break;
 
 						/*
 						Отключение клиента. В этом случае происходит вывод данных, прочитанных из канала в файл и
@@ -180,7 +179,6 @@ int main()
 					case PIPE_LOST_CONNECT:		
 						std::cout << "Testing Message. File Write" << std::endl;
 						Pipes[PipeNumber].WriteResponse(Pipes[PipeNumber].checkUser(PipeInfo[PipeNumber].getData()));
-						std::cout << PipeInfo[PipeNumber] << std::endl;
 						PipeInfo[PipeNumber].ClearData();
 						if (PipesConnect > 0)
 							PipesConnect--;
@@ -203,7 +201,6 @@ int main()
 			Если нет подключенных клиентов, то запрос о необходимости продолжения работы и выполнение
 			соответствующих действий
 			*/
-
 
 			if (PipesConnect == 0)
 			{
