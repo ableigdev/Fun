@@ -25,9 +25,6 @@ int main()
 	std::cout << "¬ведите пароль: ";
 	std::cin >> password;
 
-	login[strlen(login) + 1] = '\0';
-	password[strlen(password) + 1] = '\0';
-
 	CPipeClient<char*> PC;
 	char *ServerName = new char[MAX_PATH], *PipeName = new char[MAX_PATH];
 	

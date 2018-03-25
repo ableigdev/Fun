@@ -26,8 +26,8 @@ int main()
 
 
 	HANDLE hEvents[MAX_PIPE_INST];
-	PerPipeStruct<char*> PipeInfo[MAX_PIPE_INST];
-	CPipeServer<char*> Pipes[MAX_PIPE_INST];
+	PerPipeStruct<char> PipeInfo[MAX_PIPE_INST];
+	CPipeServer<char> Pipes[MAX_PIPE_INST];
 	char *FName = new char[MAX_PATH], answer;
 	std::ofstream file;
 	DWORD PipeNumber, NBytesRead;

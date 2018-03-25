@@ -308,7 +308,7 @@ public:
 	(данные рано или поздно будут записаны в аргумент Message)
 	*/
 
-	bool ReadMessage(T &Message)
+	bool ReadMessage(T* &Message)
 	{
 		DWORD NBytesRead;
 

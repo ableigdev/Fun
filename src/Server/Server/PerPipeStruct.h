@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <cstdlib>
+#include <string>
 
 //-----------------------------------------------------------------------
 
@@ -24,7 +25,7 @@ private:
 	диапазоне
 	*/
 	
-	std::vector<T> data;
+	std::vector<std::basic_string<T>> data;
 
 public:
 
@@ -39,11 +40,9 @@ public:
 	записывает очередное значение или в массив ControlVals, или в список.
 	*/
 
-	void ReadVal(T Val)
+	void ReadVal(T* str)
 	{
-		char* str = new char[strlen(Val) + 1];
-		strcpy(str, Val);
-		data.push_back(str);
+		data.push_back(std::basic_string<T>(str));
 	}
 
 	//---------------------------------------------------------------
@@ -58,18 +57,32 @@ public:
 
 	//---------------------------------------------------------------
 	template <typename T>
-	friend std::ostream& operator << (std::ostream &os, PerPipeStruct<T> &Val);
+	friend std::ostream& operator << (std::ostream&, PerPipeStruct<T>&);
+
+	template <typename T>
+	friend std::wostream& operator << (std::wostream&, PerPipeStruct<T>&);
 };
 
 //-----------------------------------------------------------------------
 
 template <typename T> 
-std::ostream& operator << (std::ostream &os, PerPipeStruct<T> &Val)
+std::ostream& operator << (std::ostream& ostream, PerPipeStruct<T>& right)
 {
-	for (T x : Val.data)
+	for (size_t i = 0; i < right.data.size(); ++i)
 	{
-		os << x << " ";
+		ostream << right.data[i] << " ";
 	}
 
-	return os;
+	return ostream;
+}
+
+template <typename T>
+std::wostream& operator << (std::wostream& wostream, PerPipeStruct<T>& right)
+{
+	for (size_t i = 0; i < right.data.size(); ++i)
+	{
+		wostream << right.data[i] << " ";
+	}
+
+	return wostream;
 }
