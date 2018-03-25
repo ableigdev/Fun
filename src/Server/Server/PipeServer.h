@@ -346,7 +346,6 @@ public:
 
 	void WriteResponse(bool Message)
 	{
-		LPCVOID mes = (LPCVOID)Message;
 		if (IsOpen())
 		{
 			DWORD NBWr;
