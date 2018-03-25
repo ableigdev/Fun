@@ -9,10 +9,10 @@
 # Any user files
 *.user
 *.txt
+*.log
 
 # Output files
 bin/
 obj/
 build/
 
-src/Server/Server/test.log
