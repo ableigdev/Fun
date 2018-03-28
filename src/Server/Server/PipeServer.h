@@ -3,6 +3,7 @@
 #include <windows.h>
 #include <vector>
 #include <fstream>
+#include <string>
 
 #include "User.h"
 
@@ -487,5 +488,4 @@ public:
 		}
 		return false;
 	}
-
 };
