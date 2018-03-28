@@ -3,6 +3,7 @@
 #include <windows.h>
 #include <vector>
 #include <fstream>
+#include <string>
 
 #define	PIPE_ERROR					-1
 #define PIPE_NOT_CONNECTED			1
@@ -70,7 +71,8 @@ class CPipeServer
 	PSECURITY_DESCRIPTOR pSD;
 
 	std::vector<std::basic_string<T>> db_users;
-	int maxLenLog, maxLenPass;
+	int maxLenLog;
+	int maxLenPass;
 
 	//------------------------------------------------------------------
 
@@ -472,11 +474,15 @@ public:
 	bool checkUser(const std::vector<std::basic_string<T>> &vec)
 	{
 		if (vec.size() != 0)
-			for (int i = 0; i < db_users.size(); i+=2)
+		{
+			for (size_t i = 0; i < db_users.size(); i += 2)
 			{
 				if (vec[0] == db_users[i] && vec[1] == db_users[++i])
+				{
 					return true;
+				}
 			}
+		}
 		return false;
 	}
 
