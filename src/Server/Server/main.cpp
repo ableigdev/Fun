@@ -37,7 +37,6 @@ int main()
 	char* Message = new char[100];
 	int PipesConnect = 0;
 	bool serverMode = false;
-	size_t counterAttempt = 0;
 	std::vector<std::basic_string<char>> vec;
 
 	SetConsoleOutputCP(1251);
@@ -193,26 +192,25 @@ int main()
 
 					case PIPE_LOST_CONNECT:		
 						std::cout << "Testing Message. Write Response" << std::endl;
-						auto tempData = PipeInfo[PipeNumber].getData();
-						bool resultCheckUser = Pipes[PipeNumber].checkUser(tempData);
+						auto tempData = PipeInfo[PipeNumber].getData(); // считанные логин и пароль
+						bool resultCheckUser = Pipes[PipeNumber].checkUser(tempData); // результат проверки юзера
+						int i = 1;
+						long long latency = (serverMode) ? 1 : 0;
 
-						if (!resultCheckUser)
-						{						
-							if (vec[0] == tempData[0] && ++counterAttempt <= MAX_COUNTER_ATTEMPT)
+						while (!resultCheckUser || i <= MAX_COUNTER_ATTEMPT)
+						{
+							Sleep(latency);
+							if (Pipes[PipeNumber].ReadMessage(Message)) // если данные есть в канале
 							{
-								if (serverMode)
-								{
-									Sleep(counterAttempt * 10000);
-								}
-							}
-							else
-							{
-								if (serverMode)
-								{
-									Sleep(counterAttempt * 10000);
-								}
-							}
+								PipeInfo[PipeNumber].ReadVal(Message); // записываем их в вектор
+								tempData = PipeInfo[PipeNumber].getData(); // получаем элемент вектора
+								resultCheckUser = Pipes[PipeNumber].checkUser(tempData); // сверяем логин и пароль с базой
+								Pipes[PipeNumber].WriteResponse(resultCheckUser); // отправляем результат проверки
+								++i;
+								latency <<= 5;
+							}	
 						}
+
 
 						Pipes[PipeNumber].WriteResponse(resultCheckUser);
 						PipeInfo[PipeNumber].ClearData();
@@ -222,10 +220,7 @@ int main()
 							PipesConnect--;
 						}
 
-						if (resultCheckUser || counterAttempt == MAX_COUNTER_ATTEMPT)
-						{
-							Pipes[PipeNumber].DisconnectClient();
-						}
+						Pipes[PipeNumber].DisconnectClient();
 						
 						Pipes[PipeNumber].WaitClient();
 						if (Pipes[PipeNumber].CanClose() == false)
