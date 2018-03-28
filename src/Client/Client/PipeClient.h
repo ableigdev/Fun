@@ -2,6 +2,7 @@
 
 #include <windows.h>
 #include <cstdlib>
+#include <string>
 
 template <typename T> 
 class CPipeClient
@@ -110,12 +111,12 @@ public:
 	канал, если подключение к нему выполнено успешно.
 	*/
 
-	bool WriteMessage(T &Message)
+	bool WriteMessage(std::basic_string<T> &Message)
 	{
 		if (IsPipeConnected())
 		{
 			DWORD NBWr;
-			return WriteFile(hPipe, (LPCSTR)(Message), 100, &NBWr, NULL) == TRUE;
+			return WriteFile(hPipe, &Message.at(0), 100, &NBWr, NULL) == TRUE;
 		}
 		return false;
 	}
@@ -149,14 +150,19 @@ public:
 	Доступный пользователю метод, с помощью которого осуществляется подключение к серверу и передача
 	*/
 
-	void ConnectToServer(char *PipeName)
-	{
-		char* login = new char[MAX_LOG_PASS_LENGTH];
-		char* password = new char[MAX_LOG_PASS_LENGTH];
 
+	void ConnectToServer(char *PipeName, std::basic_string<T>& login, std::basic_string<T>& password)
+	{
 		if (ConnectPipe(PipeName))
 		{
-			
+			InitMessageMode();
+
+			std::basic_string<T> str(login + "/" + password);
+
+			if (!(WriteMessage(str)))
+			{
+				std::cout << "\nОшибка записи в именованный канал!\n";
+			}
 
 			do//будем вводить логин и пароль пока не получим успешную авторизацию
 			{
@@ -196,8 +202,6 @@ public:
 		else
 			std::cout << "\nОшибка соединения с сервером (код ошибки: " << GetLastError() << ")!\n";
 
-		delete[] login;
-		delete[] password;
 	}
 
 	//------------------------------------------------------------------

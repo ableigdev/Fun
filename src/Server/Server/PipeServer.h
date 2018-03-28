@@ -4,6 +4,8 @@
 #include <vector>
 #include <fstream>
 
+#include "User.h"
+
 #define	PIPE_ERROR					-1
 #define PIPE_NOT_CONNECTED			1
 #define	PIPE_CONNECTED				2
@@ -70,7 +72,7 @@ class CPipeServer
 
 	PSECURITY_DESCRIPTOR pSD;
 
-	std::vector<std::basic_string<T>> db_users;
+	std::vector<User<T>> db_users;
 	int maxLenLog, maxLenPass;
 
 	//------------------------------------------------------------------
@@ -128,6 +130,8 @@ public:
 		Overl.hEvent = NULL;
 		CanCloseFlag = false;
 		pSD = NULL;
+		maxLenLog = 0;
+		maxLenPass = 0;
 	}
 
 
@@ -457,8 +461,7 @@ public:
 			T *tmpPassword = new T[maxLenPass];
 			while (file >> tmpLogin >> tmpPassword)
 			{
-				db_users.push_back(tmpLogin);
-				db_users.push_back(tmpPassword);
+				db_users.push_back({ tmpLogin, tmpPassword });				
 			}
 			delete[] tmpLogin;
 			delete[] tmpPassword;
@@ -470,14 +473,18 @@ public:
 
 	//------------------------------------------------------------------
 
-	bool checkUser(const std::vector<std::basic_string<T>> &vec)
+	bool checkUser(const std::vector<User<T>> &vec)
 	{
 		if (vec.size() != 0)
-			for (int i = 0; i < db_users.size(); i+=2)
+		{
+			for (size_t i = 0; i < db_users.size(); ++i)
 			{
-				if (vec[0] == db_users[i] && vec[1] == db_users[++i])
+				if (db_users[i].login == vec[i].login && db_users[i].password == vec[i].password)
+				{
 					return true;
+				}
 			}
+		}
 		return false;
 	}
 

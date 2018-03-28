@@ -17,7 +17,9 @@
 
 int main()
 {
-	
+	std::basic_string<char> login;
+	std::basic_string<char> password;
+
 	char *FName = new char[MAX_PATH], answer;
 	bool menuExit = false;
 	int alphType = 0;
@@ -29,7 +31,7 @@ int main()
 	std::cout << "¬ведите им€ сервера ( . - дл€ локального компьютера): ";
 	std::cin >> ServerName;
 
-	CPipeClient<char*> PC;
+	CPipeClient<char> PC;
 	strcat(strcat(strcpy(PipeName, PIPE_NAME_PREFIX), ServerName), PIPE_NAME);
 	std::cout << PipeName << std::endl;
 
@@ -48,7 +50,7 @@ int main()
 		{
 		case 1:
 				
-			PC.ConnectToServer(PipeName);
+			PC.ConnectToServer(PipeName, login, password);
 			break;
 
 		case 2:
@@ -66,7 +68,7 @@ int main()
 			
 			//PC.bruteForce(/*alphabet type*/ alphType)
 
-			PC.ConnectToServer(PipeName);
+			PC.ConnectToServer(PipeName, login, password);
 			break;
 
 		case 3:
@@ -82,8 +84,6 @@ int main()
 
 	delete[]ServerName;
 	delete[]PipeName;
-
-	
 
 	return 0;
 }

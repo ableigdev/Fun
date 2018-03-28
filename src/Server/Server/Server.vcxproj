@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClInclude Include="PerPipeStruct.h" />
     <ClInclude Include="PipeServer.h" />
+    <ClInclude Include="User.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />

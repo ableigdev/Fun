@@ -6,6 +6,8 @@
 #include <cstdlib>
 #include <string>
 
+#include "User.h"
+
 //-----------------------------------------------------------------------
 
 #define MAX_LOG_PASS_LENGTH 50
@@ -24,8 +26,8 @@ private:
 	записываются полученные из потока значения, кратные заданному делителю в заданном
 	диапазоне
 	*/
-	
-	std::vector<std::basic_string<T>> data;
+		
+	std::vector<User<T>> data;
 
 public:
 
@@ -42,7 +44,7 @@ public:
 
 	void ReadVal(T* str)
 	{
-		data.push_back(std::basic_string<T>(str));
+		data.push_back(parseString(std::basic_string<T>(str)));
 	}
 
 	//---------------------------------------------------------------
@@ -55,7 +57,17 @@ public:
 		data.clear();
 	}
 
-	std::vector<std::basic_string<T>> getData() const
+	User<T> parseString(std::basic_string<T> str)
+	{
+		User<T> user;
+		size_t index = str.find_first_of("/");
+		user.login = str.substr(0, index);
+		user.password = str.substr(index + 1, str.size());
+
+		return user;
+	}
+
+	std::vector<User<T>> getData() const
 	{
 		return data;
 	}
