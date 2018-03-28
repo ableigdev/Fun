@@ -206,14 +206,12 @@ int main()
 								tempData = PipeInfo[PipeNumber].getData(); // получаем элемент вектора
 								resultCheckUser = Pipes[PipeNumber].checkUser(tempData); // сверяем логин и пароль с базой
 								Pipes[PipeNumber].WriteResponse(resultCheckUser); // отправляем результат проверки
+								PipeInfo[PipeNumber].ClearData();
 								++i;
 								latency <<= 5;
 							}	
 						}
-
-
-						Pipes[PipeNumber].WriteResponse(resultCheckUser);
-						PipeInfo[PipeNumber].ClearData();
+						
 						
 						if (PipesConnect > 0)
 						{
