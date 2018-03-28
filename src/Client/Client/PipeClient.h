@@ -149,30 +149,55 @@ public:
 	Доступный пользователю метод, с помощью которого осуществляется подключение к серверу и передача
 	*/
 
-	void ConnectToServer(char *PipeName, T &login, T &password)
+	void ConnectToServer(char *PipeName)
 	{
+		char* login = new char[MAX_LOG_PASS_LENGTH];
+		char* password = new char[MAX_LOG_PASS_LENGTH];
+
 		if (ConnectPipe(PipeName))
 		{
-			InitMessageMode();
-			if (!(WriteMessage(login) && WriteMessage(password)))
-			{
-				std::cout << "\nОшибка записи в именованный канал!\n";
-			}
+			
 
-			if (ReadResponse())
+			do//будем вводить логин и пароль пока не получим успешную авторизацию
 			{
-				std::cout << "\nАвторизация прошла успешно!\n";
-			}
-			else
-			{
-				std::cout << "\nНеверный пароль или логин!\n";
-			}
+				std::cout << "\nВведите логин: ";
+				std::cin >> login;
+
+				std::cout << "Введите пароль: ";
+				std::cin >> password;
+				//InitMessageMode();
+
+				if (!(WriteMessage(login) && WriteMessage(password)))
+				{
+					std::cout << "\nОшибка записи в именованный канал!\n";
+					break;
+				}
+
+				if (ReadResponse())
+				{
+					std::cout << "\nАвторизация прошла успешно!\n";
+					break;
+				}
+				else
+				{
+					std::cout << "\nНеверный пароль или логин!\n";
+					std::cout << "Повторить ввод? (N - прекратить вход)";
+					char answ = 'y';
+					std::cin >> answ; 
+					if (answ == 'N' || answ == 'n')
+					{
+						break;
+					}
+				}
+			} while (IsPipeConnected());
 
 			std::cout << "\nНажмите любую клавишу для завершения программы (выполнится отключение от именованного канала " << PipeName << ")\n";
 		}
 		else
 			std::cout << "\nОшибка соединения с сервером (код ошибки: " << GetLastError() << ")!\n";
 
+		delete[] login;
+		delete[] password;
 	}
 
 	//------------------------------------------------------------------

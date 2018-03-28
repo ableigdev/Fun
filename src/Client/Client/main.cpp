@@ -7,16 +7,17 @@
 #include <fstream>
 #include <string>
 
-#include "PipeClient.h"
-
 #define	PIPE_NAME_PREFIX	"\\\\"
 #define	PIPE_NAME			"\\pipe\\pipe_example"
 #define MAX_LOG_PASS_LENGTH 50
 
+#include "PipeClient.h"
+
+
+
 int main()
 {
-	char* login = new char[MAX_LOG_PASS_LENGTH];
-	char* password = new char[MAX_LOG_PASS_LENGTH];
+	
 	char *FName = new char[MAX_PATH], answer;
 	bool menuExit = false;
 	int alphType = 0;
@@ -30,7 +31,7 @@ int main()
 
 	CPipeClient<char*> PC;
 	strcat(strcat(strcpy(PipeName, PIPE_NAME_PREFIX), ServerName), PIPE_NAME);
-	
+	std::cout << PipeName << std::endl;
 
 	do
 	{
@@ -46,14 +47,8 @@ int main()
 		switch (mode)
 		{
 		case 1:
-			
-			std::cout << "\n¬ведите логин: ";
-			std::cin >> login;
-
-			std::cout << "¬ведите пароль: ";
-			std::cin >> password;
-		
-			PC.ConnectToServer(PipeName, login, password);
+				
+			PC.ConnectToServer(PipeName);
 			break;
 
 		case 2:
@@ -69,9 +64,9 @@ int main()
 				alphType = 1;
 			}
 			
-			//PC.bruteForce(/*alphabet type*/ alphType
+			//PC.bruteForce(/*alphabet type*/ alphType)
 
-			PC.ConnectToServer(PipeName, login, password);
+			PC.ConnectToServer(PipeName);
 			break;
 
 		case 3:
@@ -88,8 +83,7 @@ int main()
 	delete[]ServerName;
 	delete[]PipeName;
 
-	delete[] login;
-	delete[] password;
+	
 
 	return 0;
 }
