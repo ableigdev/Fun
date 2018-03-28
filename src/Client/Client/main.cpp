@@ -15,8 +15,8 @@
 
 int main()
 {
-	char* login = new char[MAX_LOG_PASS_LENGTH];
-	char* password = new char[MAX_LOG_PASS_LENGTH];
+	std::basic_string<char> login;
+	std::basic_string<char> password;
 	char *FName = new char[MAX_PATH], answer;
 	bool menuExit = false;
 	int alphType = 0;
@@ -28,7 +28,7 @@ int main()
 	std::cout << "¬ведите им€ сервера ( . - дл€ локального компьютера): ";
 	std::cin >> ServerName;
 
-	CPipeClient<char*> PC;
+	CPipeClient<char> PC;
 	strcat(strcat(strcpy(PipeName, PIPE_NAME_PREFIX), ServerName), PIPE_NAME);
 	
 
@@ -87,9 +87,6 @@ int main()
 
 	delete[]ServerName;
 	delete[]PipeName;
-
-	delete[] login;
-	delete[] password;
 
 	return 0;
 }
