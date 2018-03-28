@@ -7,6 +7,7 @@
 
 #define MAX_PIPE_INST	3
 #define PIPE_NAME		L"\\\\.\\pipe\\pipe_example"
+#define MAX_COUNTER_ATTEMPT 3
 
 int main()
 {
@@ -35,6 +36,9 @@ int main()
 	DWORD PipeNumber, NBytesRead;
 	char* Message = new char[100];
 	int PipesConnect = 0;
+	bool serverMode = false;
+	size_t counterAttempt = 0;
+	std::vector<std::basic_string<char>> vec;
 
 	SetConsoleOutputCP(1251);
 	std::cout << "Введите имя файла с логинами и паролями: ";
@@ -46,6 +50,12 @@ int main()
 		std::cout << "Ошибка чтения файла с именем " << FName << "!" << std::endl;
 	else
 	{
+
+		std::cout << "Выберите режим работы сервера:";
+		std::cout << "\n0 - Обычный;\n1 - Противодействие взлому.\n";
+		std::cin.clear();
+		std::cin >> serverMode;
+		
 		for (int i = 0; i < MAX_PIPE_INST; i++)
 		{
 
@@ -138,6 +148,7 @@ int main()
 
 						if (Pipes[PipeNumber].ReadMessage(Message))
 						{
+							vec.push_back(std::basic_string<char>(Message));
 							/*
 							Если завершена асинхронная операция чтения, то проверка состояния операции
 							*/
@@ -148,7 +159,8 @@ int main()
 								Если прочитаны не все данные сообщения, то запуск повторного чтения
 								*/
 
-							case PIPE_READ_PART:		Pipes[PipeNumber].ReadMessage(Message);
+							case PIPE_READ_PART:		
+								Pipes[PipeNumber].ReadMessage(Message);
 								std::cout << "Testing Message. Reading data part" << std::endl;
 								break;
 
@@ -156,14 +168,17 @@ int main()
 								Если чтение сообщения завершено успешно, то обработка полученного значения
 								*/
 
-							case PIPE_READ_SUCCESS:		PipeInfo[PipeNumber].ReadVal(Message);
+							case PIPE_READ_SUCCESS:		
+								PipeInfo[PipeNumber].ReadVal(Message);
 								std::cout << "Testing Message. Reading data" << std::endl;
 								break;
 
 								/*
 								Произошла ошибка чтения
 								*/
-							case PIPE_OPERATION_ERROR:	std::cout << "Ошибка при чтении данных из канала (код ошибки: " << GetLastError() << ")!" << std::endl;
+							case PIPE_OPERATION_ERROR:	
+								std::cout << "Ошибка при чтении данных из канала (код ошибки: " 
+											<< GetLastError() << ")!" << std::endl;
 								break;
 
 							}
@@ -178,11 +193,40 @@ int main()
 
 					case PIPE_LOST_CONNECT:		
 						std::cout << "Testing Message. Write Response" << std::endl;
-						Pipes[PipeNumber].WriteResponse(Pipes[PipeNumber].checkUser(PipeInfo[PipeNumber].getData()));
+						auto tempData = PipeInfo[PipeNumber].getData();
+						bool resultCheckUser = Pipes[PipeNumber].checkUser(tempData);
+
+						if (!resultCheckUser)
+						{						
+							if (vec[0] == tempData[0] && ++counterAttempt <= MAX_COUNTER_ATTEMPT)
+							{
+								if (serverMode)
+								{
+									Sleep(counterAttempt * 10000);
+								}
+							}
+							else
+							{
+								if (serverMode)
+								{
+									Sleep(counterAttempt * 10000);
+								}
+							}
+						}
+
+						Pipes[PipeNumber].WriteResponse(resultCheckUser);
 						PipeInfo[PipeNumber].ClearData();
+						
 						if (PipesConnect > 0)
+						{
 							PipesConnect--;
-						Pipes[PipeNumber].DisconnectClient();
+						}
+
+						if (resultCheckUser || counterAttempt == MAX_COUNTER_ATTEMPT)
+						{
+							Pipes[PipeNumber].DisconnectClient();
+						}
+						
 						Pipes[PipeNumber].WaitClient();
 						if (Pipes[PipeNumber].CanClose() == false)
 						{
