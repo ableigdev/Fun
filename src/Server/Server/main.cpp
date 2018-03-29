@@ -37,7 +37,7 @@ int main()
 	char* Message = new char[100];
 	int PipesConnect = 0;
 	bool serverMode = false;
-	std::vector<std::basic_string<char>> vec;
+	std::vector<User<char>> vec;
 
 	SetConsoleOutputCP(1251);
 	std::cout << "Введите имя файла с логинами и паролями: ";
@@ -147,7 +147,8 @@ int main()
 
 						if (Pipes[PipeNumber].ReadMessage(Message))
 						{
-							vec.push_back(std::basic_string<char>(Message));
+							vec.push_back(PipeInfo[PipeNumber].parseString(std::basic_string<char>(Message)));
+							
 							/*
 							Если завершена асинхронная операция чтения, то проверка состояния операции
 							*/
@@ -197,7 +198,7 @@ int main()
 						int i = 1;
 						long long latency = (serverMode) ? 1 : 0;
 
-						while (!resultCheckUser || i <= MAX_COUNTER_ATTEMPT)
+						while (!resultCheckUser && i <= MAX_COUNTER_ATTEMPT)
 						{
 							Sleep(latency);
 							if (Pipes[PipeNumber].ReadMessage(Message)) // если данные есть в канале
