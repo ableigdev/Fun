@@ -211,6 +211,7 @@ int main()
 						while (!resultCheckUser && i <= MAX_COUNTER_ATTEMPT)
 						{
 							Sleep(latency);
+							Pipes[PipeNumber].WriteResponse(resultCheckUser);
 							if (Pipes[PipeNumber].ReadMessage(Message)) // если данные есть в канале
 							{
 								PipeInfo[PipeNumber].ReadVal(Message); // записываем их в вектор
@@ -229,6 +230,7 @@ int main()
 							PipesConnect--;
 						}
 
+						Pipes[PipeNumber].WriteResponse(resultCheckUser);
 						Pipes[PipeNumber].DisconnectClient();
 						
 						Pipes[PipeNumber].WaitClient();
