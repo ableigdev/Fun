@@ -476,9 +476,9 @@ public:
 
 	bool checkUser(const std::vector<User<T>> &vec)
 	{
-		if (vec.size() != 0)
+		if (!vec.empty())
 		{
-			for (size_t i = 0; i < db_users.size(); ++i)
+			for (size_t i = 0; i < db_users.size() && i < vec.size(); ++i)
 			{
 				if (db_users[i].login == vec[i].login && db_users[i].password == vec[i].password)
 				{
