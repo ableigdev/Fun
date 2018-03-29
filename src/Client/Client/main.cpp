@@ -49,7 +49,7 @@ int main()
 		switch (mode)
 		{
 		case 1:
-				
+			//передаем пустые логин и пароль
 			PC.ConnectToServer(PipeName, login, password);
 			break;
 

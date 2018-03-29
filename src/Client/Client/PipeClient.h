@@ -157,13 +157,6 @@ public:
 		{
 			InitMessageMode();
 
-			std::basic_string<T> str(login + "/" + password);
-
-			if (!(WriteMessage(str)))
-			{
-				std::cout << "\nќшибка записи в именованный канал!\n";
-			}
-
 			do//будем вводить логин и пароль пока не получим успешную авторизацию
 			{
 				std::cout << "\n¬ведите логин: ";
@@ -173,10 +166,11 @@ public:
 				std::cin >> password;
 				//InitMessageMode();
 
-				if (!(WriteMessage(login) && WriteMessage(password)))
+				std::basic_string<T> str(login + "/" + password);
+
+				if (!(WriteMessage(str)))
 				{
 					std::cout << "\nќшибка записи в именованный канал!\n";
-					break;
 				}
 
 				if (ReadResponse())
