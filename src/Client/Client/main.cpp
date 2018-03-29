@@ -17,8 +17,8 @@
 
 int main()
 {
-	std::basic_string<char> login;
-	std::basic_string<char> password;
+	std::basic_string<char> login{};
+	std::basic_string<char> password{};
 
 	char *FName = new char[MAX_PATH], answer;
 	bool menuExit = false;
