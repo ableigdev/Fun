@@ -55,6 +55,8 @@ int main()
 		std::cin.clear();
 		std::cin >> serverMode;
 		
+		
+
 		for (int i = 0; i < MAX_PIPE_INST; i++)
 		{
 
@@ -65,7 +67,7 @@ int main()
 
 			hEvents[i] = CreateEvent(NULL, TRUE, TRUE, NULL);
 			Pipes[i].CreatePipeAndWaitClient(PIPE_NAME, hEvents[i]);
-			Pipes[i].readFromDB(file);
+			
 			if (Pipes[i].GetState() == PIPE_ERROR)
 			{
 
@@ -102,6 +104,14 @@ int main()
 			*/
 
 			PipeNumber = WaitForMultipleObjects(MAX_PIPE_INST, hEvents, FALSE, INFINITE) - WAIT_OBJECT_0;
+			
+			if (!file.is_open())
+			{
+				file.open(FName);
+			}
+			
+			Pipes[PipeNumber].readFromDB(file);
+			file.close();
 
 			if (PipeNumber < MAX_PIPE_INST)
 			{
@@ -227,7 +237,9 @@ int main()
 							std::cout << "В канал не было передано никаких данных со стороны клиента. Повторить попытку чтения данныхY или y - да / любая другая клавиша - нет)?" << std::endl;
 							std::cin >> answer;
 							if (answer == 'Y' || answer == 'y')
+							{
 								continue;
+							}
 						}
 						break;
 
@@ -245,7 +257,11 @@ int main()
 				std::cout << "Все клиенты отключены! Продолжить работу (Y или y - да / любая другая клавиша - нет)? ";
 				std::cin >> answer;
 				if (answer != 'Y' && answer != 'y')
+				{
 					break;
+				}
+				vec.clear();
+
 				std::cout << "Ожидание подключения клиентов..." << std::endl;
 			}
 
