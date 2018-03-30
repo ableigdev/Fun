@@ -319,29 +319,45 @@ public:
 	(данные рано или поздно будут записаны в аргумент Message)
 	*/
 
-	bool ReadMessage(T* &Message)
+	bool ReadMessage(std::basic_string<T> &Message)
 	{
 		DWORD NBytesRead;
 
 		if (IsOpen())
 		{
-			if (ReadFile(hPipe, (LPVOID)Message, 100, &NBytesRead, &Overl) == TRUE)
+			if (ReadFile(hPipe, &Message.at(0), 100, &NBytesRead, &Overl) == TRUE)
 			{
 				/*
 				Асинхронное чтение завершено, следовательно, изменение состояния операции в именованном
 				канале и установка признака завершения асинхронной операции
 				*/
-				CanCloseFlag = true;
+				
+				
+				if (NBytesRead != 0)
+				{
+					CanCloseFlag = true;
+					PipeCurOperState = NBytesRead == 100 ? PIPE_READ_SUCCESS : PIPE_READ_PART;
+					fPendingIOComplete = false;
+					return true;
+				}
 
-				PipeCurOperState = NBytesRead == 100 ? PIPE_READ_SUCCESS : PIPE_READ_PART;
-				fPendingIOComplete = false;
-				return true;
+				CanCloseFlag = true;
+				fPendingIOComplete = true;
+				PipeCurOperState = PIPE_JUST_CONNECTED;
+
+				//CloseHandle(hPipe);
+				
+				return false;
 			}
 			else
 				/*
 				В противном случае проверка состояния канала и изменение поля его состояния
 				*/
-				CheckError();
+				//CheckError();
+				CanCloseFlag = true;
+				fPendingIOComplete = true;
+				PipeCurOperState = PIPE_JUST_CONNECTED;
+				//CloseHandle(hPipe);
 		}
 		return false;
 	}

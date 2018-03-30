@@ -42,9 +42,9 @@ public:
 	записывает очередное значение или в массив ControlVals, или в список.
 	*/
 
-	void ReadVal(T* str)
+	void ReadVal(std::basic_string<T> str)
 	{
-		data.push_back(parseString(std::basic_string<T>(str)));
+		data.push_back(parseString(str));
 	}
 
 	//---------------------------------------------------------------

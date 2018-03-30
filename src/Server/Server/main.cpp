@@ -34,10 +34,12 @@ int main()
 	char answer;
 	std::ifstream file;
 	DWORD PipeNumber, NBytesRead;
-	char* Message = new char[100];
+	std::basic_string<char> Message{};
+	Message.resize(100);
 	int PipesConnect = 0;
 	bool serverMode = false;
 	std::vector<User<char>> vec;
+
 
 	SetConsoleOutputCP(1251);
 	std::cout << "Введите имя файла с логинами и паролями: ";
@@ -104,7 +106,8 @@ int main()
 			*/
 
 			PipeNumber = WaitForMultipleObjects(MAX_PIPE_INST, hEvents, FALSE, INFINITE) - WAIT_OBJECT_0;
-			
+			bool flag = true;
+
 			if (!file.is_open())
 			{
 				file.open(FName);
@@ -155,45 +158,53 @@ int main()
 							PipesConnect++;
 						}
 
-						if (Pipes[PipeNumber].ReadMessage(Message))
+						
+						do
 						{
-							vec.push_back(PipeInfo[PipeNumber].parseString(std::basic_string<char>(Message)));
-							
-							/*
-							Если завершена асинхронная операция чтения, то проверка состояния операции
-							*/
+							flag = Pipes[PipeNumber].ReadMessage(Message);
 
-							switch (Pipes[PipeNumber].GetOperState())
+							if (Message[0] != '\0')
 							{
-								/*
-								Если прочитаны не все данные сообщения, то запуск повторного чтения
-								*/
+								vec.push_back(PipeInfo[PipeNumber].parseString(Message));
 
-							case PIPE_READ_PART:		
-								Pipes[PipeNumber].ReadMessage(Message);
-								std::cout << "Testing Message. Reading data part" << std::endl;
-								break;
-
-								/*
-								Если чтение сообщения завершено успешно, то обработка полученного значения
-								*/
-
-							case PIPE_READ_SUCCESS:		
 								PipeInfo[PipeNumber].ReadVal(Message);
-								std::cout << "Testing Message. Reading data" << std::endl;
-								break;
-
 								/*
-								Произошла ошибка чтения
+								Если завершена асинхронная операция чтения, то проверка состояния операции
 								*/
-							case PIPE_OPERATION_ERROR:	
-								std::cout << "Ошибка при чтении данных из канала (код ошибки: " 
-											<< GetLastError() << ")!" << std::endl;
-								break;
 
+								switch (Pipes[PipeNumber].GetOperState())
+								{
+									/*
+									Если прочитаны не все данные сообщения, то запуск повторного чтения
+									*/
+
+								case PIPE_READ_PART:
+									Pipes[PipeNumber].ReadMessage(Message);
+									std::cout << "Testing Message. Reading data part" << std::endl;
+									break;
+
+									/*
+									Если чтение сообщения завершено успешно, то обработка полученного значения
+									*/
+
+								case PIPE_READ_SUCCESS:
+									PipeInfo[PipeNumber].ReadVal(Message);
+									std::cout << "Testing Message. Reading data" << std::endl;
+									break;
+
+									/*
+									Произошла ошибка чтения
+									*/
+								case PIPE_OPERATION_ERROR:
+									std::cout << "Ошибка при чтении данных из канала (код ошибки: "
+										<< GetLastError() << ")!" << std::endl;
+									break;
+
+								}
+								break;
 							}
-							break;
-						}
+							//break;
+						} while (!flag);
 
 						/*
 						Отключение клиента. В этом случае происходит вывод данных, прочитанных из канала в файл и
@@ -263,6 +274,7 @@ int main()
 					break;
 				}
 				vec.clear();
+				Message.clear();
 
 				std::cout << "Ожидание подключения клиентов..." << std::endl;
 			}
