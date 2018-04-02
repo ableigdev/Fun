@@ -350,6 +350,27 @@ public:
 				return false;
 			}
 			else
+			{
+				static int err ;
+				switch (GetLastError())
+				{
+				case ERROR_IO_PENDING:
+
+						std::cout << "ERROR_IO_PENDING\n";
+						Sleep(1000);
+					break;
+				case ERROR_HANDLE_EOF:
+					std::cout << "ERROR_HANDLE_EOF\n";
+					break;
+				case ERROR_BROKEN_PIPE:
+					std::cout << "ERROR_BROKEN_PIPE\n";
+					break;
+				case ERROR_MORE_DATA:
+					std::cout << "ERROR_MORE_DATA\n";
+					break;
+				default:
+					break;
+				}
 				/*
 				В противном случае проверка состояния канала и изменение поля его состояния
 				*/
@@ -358,6 +379,8 @@ public:
 				fPendingIOComplete = true;
 				PipeCurOperState = PIPE_JUST_CONNECTED;
 				//CloseHandle(hPipe);
+				
+			}
 		}
 		return false;
 	}
