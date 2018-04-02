@@ -30,6 +30,8 @@ class CPipeServer
 {
 	// Описание недоступных пользователю полей класса
 
+	HANDLE readEvent;
+
 	// Дескриптор именованного канала
 
 	HANDLE hPipe;
@@ -325,14 +327,17 @@ public:
 
 		if (IsOpen())
 		{
+			
+			//readEvent = CreateEvent(NULL, TRUE, FALSE, "ReadFileEvent"); // пока не подходит
+			//предлагаю чтение вынести в отдельный поток, кго так контролировать, может быть, будет проще
 			if (ReadFile(hPipe, &Message.at(0), 100, &NBytesRead, &Overl) == TRUE)
 			{
 				/*
 				Асинхронное чтение завершено, следовательно, изменение состояния операции в именованном
 				канале и установка признака завершения асинхронной операции
 				*/
-				
-				
+
+
 				if (NBytesRead != 0)
 				{
 					CanCloseFlag = true;
@@ -346,18 +351,18 @@ public:
 				PipeCurOperState = PIPE_JUST_CONNECTED;
 
 				//CloseHandle(hPipe);
-				
+
 				return false;
 			}
 			else
 			{
-				static int err ;
+				static int err;
 				switch (GetLastError())
 				{
 				case ERROR_IO_PENDING:
-
-						std::cout << "ERROR_IO_PENDING\n";
-						Sleep(1000);
+					std::cout << "ERROR_IO_PENDING\n";
+					Sleep(1000);
+					//setEvent(readEvent);
 					break;
 				case ERROR_HANDLE_EOF:
 					std::cout << "ERROR_HANDLE_EOF\n";
@@ -379,9 +384,9 @@ public:
 				fPendingIOComplete = true;
 				PipeCurOperState = PIPE_JUST_CONNECTED;
 				//CloseHandle(hPipe);
-				
+
 			}
-		}
+			
 		return false;
 	}
 
