@@ -327,15 +327,15 @@ public:
 
 		if (IsOpen())
 		{
-			
+
 			//readEvent = CreateEvent(NULL, TRUE, FALSE, "ReadFileEvent"); // пока не подходит
 			//предлагаю чтение вынести в отдельный поток, кго так контролировать, может быть, будет проще
-			if (ReadFile(hPipe, &Message.at(0), 100, &NBytesRead, &Overl) == TRUE)
+			/*if (ReadFile(hPipe, &Message.at(0), 100, &NBytesRead, &Overl) == TRUE)
 			{
-				/*
-				јсинхронное чтение завершено, следовательно, изменение состо€ни€ операции в именованном
-				канале и установка признака завершени€ асинхронной операции
-				*/
+
+				//јсинхронное чтение завершено, следовательно, изменение состо€ни€ операции в именованном
+				//канале и установка признака завершени€ асинхронной операции
+
 
 
 				if (NBytesRead != 0)
@@ -376,16 +376,96 @@ public:
 				default:
 					break;
 				}
-				/*
-				¬ противном случае проверка состо€ни€ канала и изменение пол€ его состо€ни€
-				*/
+
+				//¬ противном случае проверка состо€ни€ канала и изменение пол€ его состо€ни€
 				//CheckError();
 				CanCloseFlag = true;
 				fPendingIOComplete = true;
 				PipeCurOperState = PIPE_JUST_CONNECTED;
 				//CloseHandle(hPipe);
 
+			}*/
+
+
+			/*
+				 од выше пока не удал€ю ибо периодически по€вл€етс€ то, что надо перенести оттуда
+
+				Ќа данный моомент задача после закрыти€ канала убрать вечный цикл выдающий ошибку.
+				пыталс€ сделать это с помощью этого:
+					CanCloseFlag = true;
+					fPendingIOComplete = true;
+				Ќо, не получилось. Ќадо еще подумать... 
+				» к сожалению € отойду, мозги мозгами а на треню надо.
+			
+			*/
+
+
+
+
+
+
+			bool fOverlapped = FALSE;
+			//ReadFile(hPipe,	&Message.at(0),		100,			&NBytesRead,		&Overl)
+			//ReadFile(hFile,	pDataBuf,			dwSizeOfBuffer,	&NumberOfBytesRead,	&osReadOperation)
+			if (!ReadFile(hPipe, &Message.at(0), 100, &NBytesRead, &Overl))
+			{
+				if (GetLastError() != ERROR_IO_PENDING)
+				{
+					// Some other error occurred while reading the file.
+					//ErrorReadingFile();
+					//ExitProcess(0);
+					std::cout << "Some error heppened" << std::endl;
+					//TODO: исправить посто€нный вывод ошибки, ибо метод то в цикле крутитс€
+					CanCloseFlag = true;
+					fPendingIOComplete = true;
+					PipeCurOperState = PIPE_NO_OPERATION;
+				}
+				else
+				{
+					fOverlapped = TRUE;
+				}
 			}
+			else
+			{
+				// Operation has completed immediately.
+				fOverlapped = FALSE;
+				std::cout << "уже прочли " <<Message << std::endl;
+			}
+
+			if (fOverlapped)
+			{
+				// Wait for the operation to complete before continuing.
+				// You could do some background work if you wanted to.
+				if (GetOverlappedResult(hPipe, &Overl, &NBytesRead, TRUE))
+				{
+					//ReadHasCompleted(NumberOfBytesTransferred);
+					Message[NBytesRead] = '\0';
+					std::cout << Message << std::endl;
+					CanCloseFlag = true;
+					fPendingIOComplete = true;
+					PipeCurOperState = PIPE_JUST_CONNECTED;
+				}
+				else
+				{
+					// Operation has completed, but it failed.
+					//ErrorReadingFile();
+					CancelIo(hPipe);
+					CloseHandle(hPipe);
+					std::cout << "error reading file \n";
+
+				}
+			}
+			else
+			{
+				//ReadHasCompleted(NumberOfBytesRead);
+				Message[NBytesRead] = '\0';
+				std::cout << Message << std::endl;
+				CanCloseFlag = true;
+				fPendingIOComplete = true;
+				PipeCurOperState = PIPE_JUST_CONNECTED;
+			}
+		}
+
 			
 		return false;
 	}
@@ -399,7 +479,22 @@ public:
 			DWORD NBWr; 
 
 			if (!WriteFile(hPipe, &Message, 1, &NBWr, NULL))
-				std::cout << "ќшибка записи в канал " << GetLastError();
+			{
+				if (GetLastError() == 232)
+				{
+					CancelIo(hPipe);
+					CloseHandle(hPipe);
+				}
+				else if(GetLastError() == 6)
+				{
+
+				}
+				else
+				{
+					std::cout << "ќшибка записи в канал " << GetLastError();
+				}
+				
+			}
 		}
 	}
 
@@ -427,16 +522,20 @@ public:
 				PipeCurOperState = PIPE_JUST_CONNECTED;
 			}
 			else
+			{
 				CanCloseFlag = true;
+			}
 
 			fPendingIOComplete = true;
 			return true;
 		}
 		else
+		{
 			/*
 			¬ противном случае проверка состо€ни€ канала и изменение пол€ его состо€ни€
 			*/
 			CheckError();
+		}
 
 		return false;
 	}
