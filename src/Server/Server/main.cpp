@@ -11,287 +11,287 @@
 
 int main()
 {
-	/*
-	Описание переменных:
-	hEvents - массив из MAX_PIPE_INST элементов, содержащий дескрипторы событий;
-	PipeInfo - массив из MAX_PIPE_INST элементов, содержащий экземпляры классов PerPipeStruct для каждого экземпляра канала;
-	Pipes - массив из MAX_PIPE_INST элементов, содержащий экземпляры классов CPipeServer для каждого экземпляра канала;
-	FName - строка, в которую будет введено пользователем имя файла;
-	answer - переменная, в которую после соответствующего запроса будет введен ответ пользователя про необходимость продолжения работу сервера;
-	file - экземпляр класса ofstream, с помощью которого будет осуществляться запись в файл;
-	PipeNumber - номер экземпляра канала, для которого завершилась асинхронная операция;
-	NBytesRead - количество прочитанных из канала байт;
-	Message - прочитанное из канала сообщение (независимо от режима работы канала байтного или режима сообщений);
-	PipesConnect - автоматически изменяемое количество одновременно подключенных клиентов (при подключении очередного клиента увеличивается на 1, при отключении - уменьшается на 1).
-	*/
+    /*
+    Описание переменных:
+    hEvents - массив из MAX_PIPE_INST элементов, содержащий дескрипторы событий;
+    PipeInfo - массив из MAX_PIPE_INST элементов, содержащий экземпляры классов PerPipeStruct для каждого экземпляра канала;
+    Pipes - массив из MAX_PIPE_INST элементов, содержащий экземпляры классов CPipeServer для каждого экземпляра канала;
+    FName - строка, в которую будет введено пользователем имя файла;
+    answer - переменная, в которую после соответствующего запроса будет введен ответ пользователя про необходимость продолжения работу сервера;
+    file - экземпляр класса ofstream, с помощью которого будет осуществляться запись в файл;
+    PipeNumber - номер экземпляра канала, для которого завершилась асинхронная операция;
+    NBytesRead - количество прочитанных из канала байт;
+    Message - прочитанное из канала сообщение (независимо от режима работы канала байтного или режима сообщений);
+    PipesConnect - автоматически изменяемое количество одновременно подключенных клиентов (при подключении очередного клиента увеличивается на 1, при отключении - уменьшается на 1).
+    */
 
 
-	HANDLE hEvents[MAX_PIPE_INST];
+    HANDLE hEvents[MAX_PIPE_INST];
 
-	PerPipeStruct<char> PipeInfo[MAX_PIPE_INST];
-	CPipeServer<char> Pipes[MAX_PIPE_INST];
-	char *FName = new char[MAX_PATH];
-	char answer;
-	std::ifstream file;
-	DWORD PipeNumber, NBytesRead;
-	std::basic_string<char> Message{};
-	Message.resize(100);
-	int PipesConnect = 0;
-	bool serverMode = false;
-	std::vector<User<char>> vec;
+    PerPipeStruct<char> PipeInfo[MAX_PIPE_INST];
+    CPipeServer<char> Pipes[MAX_PIPE_INST];
+    char *FName = new char[MAX_PATH];
+    char answer;
+    std::ifstream file;
+    DWORD PipeNumber, NBytesRead;
+    std::basic_string<char> Message{};
+    Message.resize(100);
+    int PipesConnect = 0;
+    bool serverMode = false;
+    std::vector<User<char>> vec;
 
 
-	SetConsoleOutputCP(1251);
-	std::cout << "Введите имя файла с логинами и паролями: ";
-	std::cin >> FName;
+    SetConsoleOutputCP(1251);
+    std::cout << "Введите имя файла с логинами и паролями: ";
+    std::cin >> FName;
 
-	file.open(FName);
-	
-	if (!file)
-		std::cout << "Ошибка чтения файла с именем " << FName << "!" << std::endl;
-	else
-	{
+    file.open(FName);
 
-		std::cout << "Выберите режим работы сервера:";
-		std::cout << "\n0 - Обычный;\n1 - Противодействие взлому.\n";
-		std::cin.clear();
-		std::cin >> serverMode;
-		
-		
+    if (!file)
+        std::cout << "Ошибка чтения файла с именем " << FName << "!" << std::endl;
+    else
+    {
 
-		for (int i = 0; i < MAX_PIPE_INST; i++)
-		{
+        std::cout << "Выберите режим работы сервера:";
+        std::cout << "\n0 - Обычный;\n1 - Противодействие взлому.\n";
+        std::cin.clear();
+        std::cin >> serverMode;
 
-			/*
-			Получение дескрипторов создаваемых событий и создание экземпляров именованных каналов и
-			перевод их в режим ожидания подключения клиента
-			*/
 
-			hEvents[i] = CreateEvent(NULL, TRUE, TRUE, NULL);
-			Pipes[i].CreatePipeAndWaitClient(PIPE_NAME, hEvents[i]);
-			
-			if (Pipes[i].GetState() == PIPE_ERROR)
-			{
 
-				/*
-				Если произошла ошибка при создании экземпляра именованного канала, то освобождение
-				всех выделенных в программе ресурсов и завершение приложения
-				*/
+        for (int i = 0; i < MAX_PIPE_INST; i++)
+        {
 
-				file.close();
-				delete[]FName;
+            /*
+            Получение дескрипторов создаваемых событий и создание экземпляров именованных каналов и
+            перевод их в режим ожидания подключения клиента
+            */
 
-				for (i--; i >= 0; i--)
-					CloseHandle(hEvents[i]);
+            hEvents[i] = CreateEvent(NULL, TRUE, TRUE, NULL);
+            Pipes[i].CreatePipeAndWaitClient(PIPE_NAME, hEvents[i]);
 
-				std::wcout << "Ошибка создания экземпляров именованного канала " << PIPE_NAME << std::endl;
+            if (Pipes[i].GetState() == PIPE_ERROR)
+            {
 
-				return 0;
-			}
-		}
+                /*
+                Если произошла ошибка при создании экземпляра именованного канала, то освобождение
+                всех выделенных в программе ресурсов и завершение приложения
+                */
 
-		std::cout << "Ожидание подключения клиентов..." << std::endl;
-		/*
-		Бесконечный цикл, составляющий логическое ядро сервера
-		*/
+                file.close();
+                delete[]FName;
 
-		do
-		{
+                for (i--; i >= 0; i--)
+                    CloseHandle(hEvents[i]);
 
-			/*
-			Ожидания перехода в свободное состояние события, связанного с каким-то из каналов,
-			что свидетельствует о завершении асинхронной операции, и получения номера этого канала.
-			При этом функция WaitForMultipleObjects состояние события с ручным сбросом
-			АВТОМАТИЧЕСКИ НЕ ИЗМЕНЯЕТ.
-			*/
+                std::wcout << "Ошибка создания экземпляров именованного канала " << PIPE_NAME << std::endl;
 
-			PipeNumber = WaitForMultipleObjects(MAX_PIPE_INST, hEvents, FALSE, INFINITE) - WAIT_OBJECT_0;
-			bool flag = true;
+                return 0;
+            }
+        }
 
-			if (!file.is_open())
-			{
-				file.open(FName);
-			}
-			
-			Pipes[PipeNumber].readFromDB(file);
-			file.close();
+        std::cout << "Ожидание подключения клиентов..." << std::endl;
+        /*
+        Бесконечный цикл, составляющий логическое ядро сервера
+        */
 
-			if (PipeNumber < MAX_PIPE_INST)
-			{
+        do
+        {
 
-				/*
-				Если получен правильный номер, то проверяется, была ли запущена асинхронная операция, и,
-				если она была запущена, то проверяется состояние завершенной асинхронной операции методом
-				GetPendingResult и выполняются соответствующие изменения полей состояния экземпляра канала
-				*/
+            /*
+            Ожидания перехода в свободное состояние события, связанного с каким-то из каналов,
+            что свидетельствует о завершении асинхронной операции, и получения номера этого канала.
+            При этом функция WaitForMultipleObjects состояние события с ручным сбросом
+            АВТОМАТИЧЕСКИ НЕ ИЗМЕНЯЕТ.
+            */
 
-				if (!Pipes[PipeNumber].GetIOComplete())
-					Pipes[PipeNumber].GetPendingResult(NBytesRead);
+            PipeNumber = WaitForMultipleObjects(MAX_PIPE_INST, hEvents, FALSE, INFINITE) - WAIT_OBJECT_0;
+            bool flag = true;
 
-				if (Pipes[PipeNumber].GetIOComplete())
-				{
-					/*
-					Если установлен признак завершения асинхронной операции для указанного экземпляра канала,
-					то проверка поля его состояния
-					*/
+            if (!file.is_open())
+            {
+                file.open(FName);
+            }
 
-					switch (Pipes[PipeNumber].GetState())
-					{
+            Pipes[PipeNumber].readFromDB(file);
+            file.close();
 
-						/*
-						В случае, когда при работе с каналом происходит непредвиденная ошибка
-						*/
+            if (PipeNumber < MAX_PIPE_INST)
+            {
 
-					case PIPE_ERROR:			
-						std::cout << "Ошибка при работе с каналом! Производится принудительное отсоединение клиента (код ошибки: " 
-							<< GetLastError() << ")!" << std::endl;
+                /*
+                Если получен правильный номер, то проверяется, была ли запущена асинхронная операция, и,
+                если она была запущена, то проверяется состояние завершенной асинхронной операции методом
+                GetPendingResult и выполняются соответствующие изменения полей состояния экземпляра канала
+                */
 
-						/*
-						Если клиент подключен, то проверка того, подключился ли он только что (соответствующее
-						значение в поле состояния операции в канале), и, если это так, то увеличение количества
-						подключенных клиентов на 1.
-						*/
-					case PIPE_CONNECTED:		
-						if (Pipes[PipeNumber].GetOperState() == PIPE_JUST_CONNECTED)
-						{
-							std::cout << "Testing Message. Just connected" << std::endl;
-							PipesConnect++;
-						}
+                if (!Pipes[PipeNumber].GetIOComplete())
+                    Pipes[PipeNumber].GetPendingResult(NBytesRead);
 
-						
-						do
-						{
-							flag = Pipes[PipeNumber].ReadMessage(Message);
+                if (Pipes[PipeNumber].GetIOComplete())
+                {
+                    /*
+                    Если установлен признак завершения асинхронной операции для указанного экземпляра канала,
+                    то проверка поля его состояния
+                    */
 
-							if (Message[0] != '\0')
-							{
-								vec.push_back(PipeInfo[PipeNumber].parseString(Message));
+                    switch (Pipes[PipeNumber].GetState())
+                    {
 
-								PipeInfo[PipeNumber].ReadVal(Message);
-								/*
-								Если завершена асинхронная операция чтения, то проверка состояния операции
-								*/
+                        /*
+                        В случае, когда при работе с каналом происходит непредвиденная ошибка
+                        */
 
-								switch (Pipes[PipeNumber].GetOperState())
-								{
-									/*
-									Если прочитаны не все данные сообщения, то запуск повторного чтения
-									*/
+                    case PIPE_ERROR:
+                        std::cout << "Ошибка при работе с каналом! Производится принудительное отсоединение клиента (код ошибки: "
+                            << GetLastError() << ")!" << std::endl;
 
-								case PIPE_READ_PART:
-									Pipes[PipeNumber].ReadMessage(Message);
-									std::cout << "Testing Message. Reading data part" << std::endl;
-									break;
+                        /*
+                        Если клиент подключен, то проверка того, подключился ли он только что (соответствующее
+                        значение в поле состояния операции в канале), и, если это так, то увеличение количества
+                        подключенных клиентов на 1.
+                        */
+                    case PIPE_CONNECTED:
+                        if (Pipes[PipeNumber].GetOperState() == PIPE_JUST_CONNECTED)
+                        {
+                            std::cout << "Testing Message. Just connected" << std::endl;
+                            PipesConnect++;
+                        }
 
-									/*
-									Если чтение сообщения завершено успешно, то обработка полученного значения
-									*/
 
-								case PIPE_READ_SUCCESS:
-									PipeInfo[PipeNumber].ReadVal(Message);
-									std::cout << "Testing Message. Reading data" << std::endl;
-									break;
+                        do
+                        {
+                            flag = Pipes[PipeNumber].ReadMessage(Message);
 
-									/*
-									Произошла ошибка чтения
-									*/
-								case PIPE_OPERATION_ERROR:
-									std::cout << "Ошибка при чтении данных из канала (код ошибки: "
-										<< GetLastError() << ")!" << std::endl;
-									break;
+                            if (Message[0] != '\0')
+                            {
+                                vec.push_back(PipeInfo[PipeNumber].parseString(Message));
 
-								}
-								break;
-							}
-							//break;
-						} while (!flag);
+                                PipeInfo[PipeNumber].ReadVal(Message);
+                                /*
+                                Если завершена асинхронная операция чтения, то проверка состояния операции
+                                */
 
-						/*
-						Отключение клиента. В этом случае происходит вывод данных, прочитанных из канала в файл и
-						их очистка в структуре данных, уменьшения количество подключенных клиентов на 1,
-						отключение клиента со стороны сервера и запуск ожидания подключения нового клиента
-						*/
+                                switch (Pipes[PipeNumber].GetOperState())
+                                {
+                                    /*
+                                    Если прочитаны не все данные сообщения, то запуск повторного чтения
+                                    */
 
-					case PIPE_LOST_CONNECT:		
-						std::cout << "Testing Message. Write Response" << std::endl;
-						auto tempData = PipeInfo[PipeNumber].getData(); // считанные логин и пароль
-						bool resultCheckUser = Pipes[PipeNumber].checkUser(tempData); // результат проверки юзера
-						int i = 1;
-						long long latency = (serverMode) ? 1 : 0;
+                                case PIPE_READ_PART:
+                                    Pipes[PipeNumber].ReadMessage(Message);
+                                    std::cout << "Testing Message. Reading data part" << std::endl;
+                                    break;
 
-						while (!resultCheckUser && i <= MAX_COUNTER_ATTEMPT)
-						{
-							Sleep(latency);
-							Pipes[PipeNumber].WriteResponse(resultCheckUser);
-							if (Pipes[PipeNumber].ReadMessage(Message)) // если данные есть в канале
-							{
-								PipeInfo[PipeNumber].ReadVal(Message); // записываем их в вектор
-								tempData = PipeInfo[PipeNumber].getData(); // получаем элемент вектора
-								resultCheckUser = Pipes[PipeNumber].checkUser(tempData); // сверяем логин и пароль с базой
-								Pipes[PipeNumber].WriteResponse(resultCheckUser); // отправляем результат проверки
-								PipeInfo[PipeNumber].ClearData();
-								++i;
-								latency <<= 5;
-							}	
-						}
-						
-						
-						if (PipesConnect > 0)
-						{
-							PipesConnect--;
-						}
+                                    /*
+                                    Если чтение сообщения завершено успешно, то обработка полученного значения
+                                    */
 
-						Pipes[PipeNumber].WriteResponse(resultCheckUser);
-						Pipes[PipeNumber].DisconnectClient();
-						
-						Pipes[PipeNumber].WaitClient();
-						if (Pipes[PipeNumber].CanClose() == false)
-						{
-							std::cout << "В канал не было передано никаких данных со стороны клиента. Повторить попытку чтения данныхY или y - да / любая другая клавиша - нет)?" << std::endl;
-							std::cin >> answer;
-							if (answer == 'Y' || answer == 'y')
-							{
-								continue;
-							}
-						}
-						break;
+                                case PIPE_READ_SUCCESS:
+                                    PipeInfo[PipeNumber].ReadVal(Message);
+                                    std::cout << "Testing Message. Reading data" << std::endl;
+                                    break;
 
-					}
-				}
-			}
+                                    /*
+                                    Произошла ошибка чтения
+                                    */
+                                case PIPE_OPERATION_ERROR:
+                                    std::cout << "Ошибка при чтении данных из канала (код ошибки: "
+                                        << GetLastError() << ")!" << std::endl;
+                                    break;
 
-			/*
-			Если нет подключенных клиентов, то запрос о необходимости продолжения работы и выполнение
-			соответствующих действий
-			*/
+                                }
+                                break;
+                            }
+                            //break;
+                        } while (!flag);
 
-			if (PipesConnect == 0)
-			{
-				std::cout << "Все клиенты отключены! Продолжить работу (Y или y - да / любая другая клавиша - нет)? ";
-				std::cin >> answer;
-				if (answer != 'Y' && answer != 'y')
-				{
-					break;
-				}
-				vec.clear();
-				Message.clear();
+                        /*
+                        Отключение клиента. В этом случае происходит вывод данных, прочитанных из канала в файл и
+                        их очистка в структуре данных, уменьшения количество подключенных клиентов на 1,
+                        отключение клиента со стороны сервера и запуск ожидания подключения нового клиента
+                        */
 
-				std::cout << "Ожидание подключения клиентов..." << std::endl;
-			}
+                    case PIPE_LOST_CONNECT:
+                        std::cout << "Testing Message. Write Response" << std::endl;
+                        auto tempData = PipeInfo[PipeNumber].getData(); // считанные логин и пароль
+                        bool resultCheckUser = Pipes[PipeNumber].checkUser(tempData); // результат проверки юзера
+                        int i = 1;
+                        long long latency = (serverMode) ? 1 : 0;
 
-		} while (1);
+                        while (!resultCheckUser && i <= MAX_COUNTER_ATTEMPT)
+                        {
+                            Sleep(latency);
+                            Pipes[PipeNumber].WriteResponse(resultCheckUser);
+                            if (Pipes[PipeNumber].ReadMessage(Message)) // если данные есть в канале
+                            {
+                                PipeInfo[PipeNumber].ReadVal(Message); // записываем их в вектор
+                                tempData = PipeInfo[PipeNumber].getData(); // получаем элемент вектора
+                                resultCheckUser = Pipes[PipeNumber].checkUser(tempData); // сверяем логин и пароль с базой
+                                Pipes[PipeNumber].WriteResponse(resultCheckUser); // отправляем результат проверки
+                                PipeInfo[PipeNumber].ClearData();
+                                ++i;
+                                latency <<= 5;
+                            }
+                        }
 
-		/*
-		Освобождение выделенных в программе ресурсов
-		*/
 
-		for (int i = 0; i < MAX_PIPE_INST; i++)
-			CloseHandle(hEvents[i]);
+                        if (PipesConnect > 0)
+                        {
+                            PipesConnect--;
+                        }
 
-		file.close();
-	}
+                        Pipes[PipeNumber].WriteResponse(resultCheckUser);
+                        Pipes[PipeNumber].DisconnectClient();
 
-	delete[]FName;
+                        Pipes[PipeNumber].WaitClient();
+                        if (Pipes[PipeNumber].CanClose() == false)
+                        {
+                            std::cout << "В канал не было передано никаких данных со стороны клиента. Повторить попытку чтения данныхY или y - да / любая другая клавиша - нет)?" << std::endl;
+                            std::cin >> answer;
+                            if (answer == 'Y' || answer == 'y')
+                            {
+                                continue;
+                            }
+                        }
+                        break;
 
-	return 0;
+                    }
+                }
+            }
+
+            /*
+            Если нет подключенных клиентов, то запрос о необходимости продолжения работы и выполнение
+            соответствующих действий
+            */
+
+            if (PipesConnect == 0)
+            {
+                std::cout << "Все клиенты отключены! Продолжить работу (Y или y - да / любая другая клавиша - нет)? ";
+                std::cin >> answer;
+                if (answer != 'Y' && answer != 'y')
+                {
+                    break;
+                }
+                vec.clear();
+                Message.clear();
+
+                std::cout << "Ожидание подключения клиентов..." << std::endl;
+            }
+
+        } while (1);
+
+        /*
+        Освобождение выделенных в программе ресурсов
+        */
+
+        for (int i = 0; i < MAX_PIPE_INST; i++)
+            CloseHandle(hEvents[i]);
+
+        file.close();
+    }
+
+    delete[]FName;
+
+    return 0;
 }
