@@ -116,7 +116,7 @@ public:
 		if (IsPipeConnected())
 		{
 			DWORD NBWr;
-			return WriteFile(hPipe, &Message.at(0), 100, &NBWr, NULL) == TRUE;
+			return WriteFile(hPipe, &Message.at(0), sizeof(Message), &NBWr, NULL) == TRUE;
 		}
 		return false;
 	}
@@ -129,7 +129,10 @@ public:
 		{
 			DWORD NBytesRead;
 			bool Message;
-			ReadFile(hPipe, &Message, 1, &NBytesRead, NULL);
+            if (!ReadFile(hPipe, &Message, 1, &NBytesRead, NULL))
+            {
+                return false;
+            }
 			
 			return Message;
 		}

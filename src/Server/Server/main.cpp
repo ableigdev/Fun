@@ -213,22 +213,45 @@ int main()
                         */
 
                     case PIPE_LOST_CONNECT:
+                      
                         std::cout << "Testing Message. Write Response" << std::endl;
                         auto tempData = PipeInfo[PipeNumber].getData(); // считанные логин и пароль
                         bool resultCheckUser = Pipes[PipeNumber].checkUser(tempData); // результат проверки юзера
                         int i = 1;
                         long long latency = (serverMode) ? 1 : 0;
+                        Pipes[PipeNumber].WriteResponse(resultCheckUser);
 
-                        while (!resultCheckUser && i <= MAX_COUNTER_ATTEMPT)
+                        //for debug----------------------------------------
+                        std::cout << "Testing Message. Client auth status: ";
+                        if (resultCheckUser) std::cout << "TRUE";
+                        else std::cout << "FALSE";
+                        std::cout << std::endl;
+                        //--------------------------------------------------
+
+                        // в идеале было бы сделать всё проверку сверху в первой итерации цикла, а то повторение одного и того же кода... 
+                        while (!resultCheckUser && i < MAX_COUNTER_ATTEMPT)
                         {
                             Sleep(latency);
-                            Pipes[PipeNumber].WriteResponse(resultCheckUser);
+
                             if (Pipes[PipeNumber].ReadMessage(Message)) // если данные есть в канале
+                            //if()
                             {
+                                if (GetLastError() == CLIENT_DISCONNECT)
+                                    break;
+
                                 PipeInfo[PipeNumber].ReadVal(Message); // записываем их в вектор
                                 tempData = PipeInfo[PipeNumber].getData(); // получаем элемент вектора
+                                std::cout << "Testing Message. Write Response" << std::endl;
                                 resultCheckUser = Pipes[PipeNumber].checkUser(tempData); // сверяем логин и пароль с базой
                                 Pipes[PipeNumber].WriteResponse(resultCheckUser); // отправляем результат проверки
+
+                                //for debug----------------------------------------
+                                std::cout << "Testing Message. Client auth status: ";
+                                if(resultCheckUser) std::cout << "TRUE";
+                                else std::cout << "FALSE";
+                                std::cout << std::endl;
+                                //--------------------------------------------------
+
                                 PipeInfo[PipeNumber].ClearData();
                                 ++i;
                                 latency <<= 5;
@@ -242,6 +265,7 @@ int main()
                         }
 
                         Pipes[PipeNumber].WriteResponse(resultCheckUser);
+                        std::cout << "Testing Message. Client disconnected.";
                         Pipes[PipeNumber].DisconnectClient();
 
                         Pipes[PipeNumber].WaitClient();

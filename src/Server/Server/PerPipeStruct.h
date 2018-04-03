@@ -61,8 +61,9 @@ public:
 	{
 		User<T> user;
 		size_t index = str.find_first_of("/");
+        size_t eOF = str.find('\0');
 		user.login = str.substr(0, index);
-		user.password = str.substr(index + 1, str.size());
+		user.password = str.substr(index + 1, eOF - (index + 1)); //looks like a shit :D
 
 		return user;
 	}

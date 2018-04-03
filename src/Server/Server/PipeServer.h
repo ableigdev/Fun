@@ -19,6 +19,7 @@
 #define	PIPE_READ_SUCCESS			12
 #define	PIPE_READ_PART				13
 
+#define CLIENT_DISCONNECT           109
 
 #define DEF_BUF_SIZE				16384
 #define DEF_WAIT_TIME				20000
@@ -329,15 +330,9 @@ public:
         {
 
             //readEvent = CreateEvent(NULL, TRUE, FALSE, "ReadFileEvent"); // пока не подходит
-            //предлагаю чтение вынести в отдельный поток, кго так контролировать, может быть, будет проще
+            
             /*if (ReadFile(hPipe, &Message.at(0), 100, &NBytesRead, &Overl) == TRUE)
             {
-
-                //Асинхронное чтение завершено, следовательно, изменение состояния операции в именованном
-                //канале и установка признака завершения асинхронной операции
-
-
-
                 if (NBytesRead != 0)
                 {
                     CanCloseFlag = true;
@@ -398,24 +393,22 @@ public:
 
             */
 
-
-
-
-
-
             bool fOverlapped = FALSE;
-            //ReadFile(hPipe,	&Message.at(0),		100,			&NBytesRead,		&Overl)
-            //ReadFile(hFile,	pDataBuf,			dwSizeOfBuffer,	&NumberOfBytesRead,	&osReadOperation)
-            if (!ReadFile(hPipe, &Message.at(0), 100, &NBytesRead, &Overl))
+            
+            //if (!ReadFile(hPipe, &Message.at(0), 100, &NBytesRead, &Overl))
+            if (!ReadFile(hPipe, &Message.at(0), sizeof(Message), &NBytesRead, &Overl))
+                //BUG: out of range. It happens when server 
             {
                 if (GetLastError() != ERROR_IO_PENDING)
                 {
+                    //произошла какая-то ошибка при чтении из пайпа
                     if (GetLastError() == CLIENT_DISCONNECT)
-                        // Some other error occurred while reading the file.
-                        //ErrorReadingFile();
-                        //ExitProcess(0);
+                        std::cout << "Client disconnected! \n";
+                    else
+                    {
                         std::cout << "Some error heppened" << std::endl;
-                    //TODO: исправить постоянный вывод ошибки, ибо метод то в цикле крутится
+                    }
+                    
                     CanCloseFlag = false;
                     fPendingIOComplete = true;
                     PipeCurOperState = PIPE_NO_OPERATION;
@@ -429,7 +422,6 @@ public:
             {
                 // Operation has completed immediately.
                 fOverlapped = FALSE;
-                std::cout << "уже прочли " << Message << std::endl;
             }
 
             if (fOverlapped)
@@ -438,17 +430,18 @@ public:
                 // You could do some background work if you wanted to.
                 if (GetOverlappedResult(hPipe, &Overl, &NBytesRead, TRUE))
                 {
-                    //ReadHasCompleted(NumberOfBytesTransferred);
-                    Message[NBytesRead] = '\0';
-                    std::cout << Message << std::endl;
+                    //Если чтение произошло успешно
+                    std::cout << "Testing Message. Receiving data from client. \n";
+                    Message[NBytesRead] = '\0'; //making end of string for parser
                     CanCloseFlag = true;
                     fPendingIOComplete = true;
                     PipeCurOperState = PIPE_JUST_CONNECTED;
+
+                    return true;
                 }
                 else
                 {
-                    // Operation has completed, but it failed.
-                    //ErrorReadingFile();
+                    //Операция была выполнена асинхронно, но что-то пошло не так
                     CancelIo(hPipe);
                     //CloseHandle(hPipe);
                     std::cout << "error reading file \n";
@@ -457,9 +450,8 @@ public:
             }
             else
             {
-                //ReadHasCompleted(NumberOfBytesRead);
+                //Если чтение произошло успешно
                 Message[NBytesRead] = '\0';
-                std::cout << Message << std::endl;
                 CanCloseFlag = true;
                 fPendingIOComplete = true;
                 PipeCurOperState = PIPE_JUST_CONNECTED;
@@ -480,6 +472,7 @@ public:
 
             if (!WriteFile(hPipe, &Message, 1, &NBWr, NULL))
             {
+
                 std::cout << "Ошибка записи в канал " << GetLastError();
             }
         }
