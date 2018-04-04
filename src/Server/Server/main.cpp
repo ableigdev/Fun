@@ -35,7 +35,7 @@ int main()
     std::ifstream file;
     DWORD PipeNumber, NBytesRead;
     std::basic_string<char> Message{};
-    Message.resize(100);
+    //Message.resize(100); // moved to loop 
     int PipesConnect = 0;
     bool serverMode = false;
     std::vector<User<char>> vec;
@@ -97,6 +97,7 @@ int main()
 
         do
         {
+            Message.resize(100);
 
             /*
             Ожидания перехода в свободное состояние события, связанного с каким-то из каналов,
@@ -213,7 +214,14 @@ int main()
                         */
 
                     case PIPE_LOST_CONNECT:
-                      
+                        bool resultCheckUser = false;
+                        long long latency = (serverMode) ? 1 : 0;
+                        int i = 0;
+                        auto tempData = PipeInfo[PipeNumber].getData();
+                        bool firstTimeFlag = true;
+
+
+                        /*
                         std::cout << "Testing Message. Write Response" << std::endl;
                         auto tempData = PipeInfo[PipeNumber].getData(); // считанные логин и пароль
                         bool resultCheckUser = Pipes[PipeNumber].checkUser(tempData); // результат проверки юзера
@@ -227,15 +235,17 @@ int main()
                         else std::cout << "FALSE";
                         std::cout << std::endl;
                         //--------------------------------------------------
+                        */
 
-                        // в идеале было бы сделать всё проверку сверху в первой итерации цикла, а то повторение одного и того же кода... 
+                        // в идеале было бы сделать всё проверку сверху в первой итерации цикла, а то повторение одного и того же кода... Неправильо это. 
+                        // 04.04 - убрал я вашу индусятину, но пришлось щипотку своей добавить
                         while (!resultCheckUser && i < MAX_COUNTER_ATTEMPT)
                         {
                             Sleep(latency);
 
-                            if (Pipes[PipeNumber].ReadMessage(Message)) // если данные есть в канале
-                            //if()
+                            if (firstTimeFlag || Pipes[PipeNumber].ReadMessage(Message)) // если данные есть в канале
                             {
+                                firstTimeFlag = false; // немного по индусски, но и ваш код был не очень
                                 if (GetLastError() == CLIENT_DISCONNECT)
                                     break;
 
@@ -298,7 +308,8 @@ int main()
                     break;
                 }
                 vec.clear();
-                Message.clear();
+                Message.clear(); // makes size of string == 0
+
 
                 std::cout << "Ожидание подключения клиентов..." << std::endl;
             }

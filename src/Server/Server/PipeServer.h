@@ -394,7 +394,7 @@ public:
             */
 
             bool fOverlapped = FALSE;
-            
+
             //if (!ReadFile(hPipe, &Message.at(0), 100, &NBytesRead, &Overl))
             if (!ReadFile(hPipe, &Message.at(0), sizeof(Message), &NBytesRead, &Overl))
                 //BUG: out of range. It happens when server 
