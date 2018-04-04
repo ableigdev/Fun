@@ -170,6 +170,11 @@ public:
             HeapFree(GetProcessHeap(), HEAP_NO_SERIALIZE, pSD);
     }
 
+    void setState(int state)
+    {
+        PipeState = state;
+    }
+
     //------------------------------------------------------------------
     /*
     Доступный пользователю метод класса, который создает экземпляр именованного канала с

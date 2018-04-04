@@ -90,13 +90,14 @@ int main()
             }
         }
 
-        std::cout << "Ожидание подключения клиентов..." << std::endl;
+        
         /*
         Бесконечный цикл, составляющий логическое ядро сервера
         */
 
         do
         {
+            std::cout << "Ожидание подключения клиентов..." << std::endl;
             Message.resize(100);
 
             /*
@@ -131,6 +132,13 @@ int main()
 
                 if (Pipes[PipeNumber].GetIOComplete())
                 {
+
+                    bool resultCheckUser = false;
+                    long long latency = (serverMode) ? 1 : 0;
+                    int i = 0;
+                    auto tempData = PipeInfo[PipeNumber].getData();
+                    bool firstTimeFlag = true;
+
                     /*
                     Если установлен признак завершения асинхронной операции для указанного экземпляра канала,
                     то проверка поля его состояния
@@ -142,7 +150,6 @@ int main()
                         /*
                         В случае, когда при работе с каналом происходит непредвиденная ошибка
                         */
-
                     case PIPE_ERROR:
                         std::cout << "Ошибка при работе с каналом! Производится принудительное отсоединение клиента (код ошибки: "
                             << GetLastError() << ")!" << std::endl;
@@ -159,54 +166,59 @@ int main()
                             PipesConnect++;
                         }
 
+                        resultCheckUser = false;
+                        latency = (serverMode) ? 1 : 0;
+                        i = 0;
+                        tempData = PipeInfo[PipeNumber].getData();
+                        firstTimeFlag = true;
 
-                        do
+
+                        while (!resultCheckUser && i < MAX_COUNTER_ATTEMPT)
                         {
-                            flag = Pipes[PipeNumber].ReadMessage(Message);
+                            Sleep(latency);
 
-                            if (Message[0] != '\0')
+                            if ((firstTimeFlag && Pipes[PipeNumber].ReadMessage(Message)) || Pipes[PipeNumber].ReadMessage(Message)) // если данные есть в канале
                             {
-                                vec.push_back(PipeInfo[PipeNumber].parseString(Message));
-
-                                PipeInfo[PipeNumber].ReadVal(Message);
-                                /*
-                                Если завершена асинхронная операция чтения, то проверка состояния операции
-                                */
-
-                                switch (Pipes[PipeNumber].GetOperState())
+                             
+                                if (Pipes[PipeNumber].GetState() != PIPE_NOT_CONNECTED)
                                 {
-                                    /*
-                                    Если прочитаны не все данные сообщения, то запуск повторного чтения
-                                    */
+                                    firstTimeFlag = false; // НЕМНОГО ПО ИНДУССКИ, НО И ВАШ КОД БЫЛ НЕ ОЧЕНЬ
 
-                                case PIPE_READ_PART:
-                                    Pipes[PipeNumber].ReadMessage(Message);
-                                    std::cout << "Testing Message. Reading data part" << std::endl;
-                                    break;
+                                    PipeInfo[PipeNumber].ReadVal(Message); // записываем их в вектор
+                                    tempData = PipeInfo[PipeNumber].getData(); // получаем элемент вектора
+                                    std::cout << "Testing Message. Write Response" << std::endl;
+                                    resultCheckUser = Pipes[PipeNumber].checkUser(tempData); // сверяем логин и пароль с базой
+                                    Pipes[PipeNumber].WriteResponse(resultCheckUser); // отправляем результат проверки
 
-                                    /*
-                                    Если чтение сообщения завершено успешно, то обработка полученного значения
-                                    */
+                                    //for debug----------------------------------------
+                                    std::cout << "Testing Message. Client auth status: ";
+                                    if (resultCheckUser)
+                                        std::cout << "TRUE";
+                                    else
+                                        std::cout << "FALSE";
+                                    std::cout << std::endl;
+                                    //--------------------------------------------------
 
-                                case PIPE_READ_SUCCESS:
-                                    PipeInfo[PipeNumber].ReadVal(Message);
-                                    std::cout << "Testing Message. Reading data" << std::endl;
-                                    break;
-
-                                    /*
-                                    Произошла ошибка чтения
-                                    */
-                                case PIPE_OPERATION_ERROR:
-                                    std::cout << "Ошибка при чтении данных из канала (код ошибки: "
-                                        << GetLastError() << ")!" << std::endl;
-                                    break;
-
+                                    PipeInfo[PipeNumber].ClearData();
+                                    tempData.clear();
+                                    ++i;
+                                    latency <<= 5;
                                 }
-                                break;
-                            }
-                            //break;
-                        } while (!flag);
+                                else
+                                {
+                                    Pipes[PipeNumber].setState(PIPE_LOST_CONNECT);
 
+                                    if (PipesConnect != 0)
+                                    {
+                                        --PipesConnect;
+                                    }
+
+                                    break;
+                                }
+                            }
+                        }
+                        Pipes[PipeNumber].setState(PIPE_LOST_CONNECT);
+                        break;
 
                         /*
                         Отключение клиента. В этом случае происходит вывод данных, прочитанных из канала в файл и
@@ -216,53 +228,16 @@ int main()
 
                     case PIPE_LOST_CONNECT:
 
-                        bool resultCheckUser = false;
-                        long long latency = (serverMode) ? 1 : 0;
-                        int i = 0;
-                        auto tempData = PipeInfo[PipeNumber].getData();
-                        bool firstTimeFlag = true;
-
-
-                        while (!resultCheckUser && i < MAX_COUNTER_ATTEMPT)
-                        {
-                            Sleep(latency);
-
-                            if (firstTimeFlag || Pipes[PipeNumber].ReadMessage(Message)) // если данные есть в канале
-                            {
-                                firstTimeFlag = false; // немного по индусски, но и ваш код был не очень
-                                if (GetLastError() == CLIENT_DISCONNECT)
-                                    break;
-
-                                PipeInfo[PipeNumber].ReadVal(Message); // записываем их в вектор
-                                tempData = PipeInfo[PipeNumber].getData(); // получаем элемент вектора
-                                std::cout << "Testing Message. Write Response" << std::endl;
-                                resultCheckUser = Pipes[PipeNumber].checkUser(tempData); // сверяем логин и пароль с базой
-                                Pipes[PipeNumber].WriteResponse(resultCheckUser); // отправляем результат проверки
-
-                                //for debug----------------------------------------
-                                std::cout << "Testing Message. Client auth status: ";
-                                if(resultCheckUser) std::cout << "TRUE";
-                                else std::cout << "FALSE";
-                                std::cout << std::endl;
-                                //--------------------------------------------------
-
-                                PipeInfo[PipeNumber].ClearData();
-                                ++i;
-                                latency <<= 5;
-                            }
-                        }
-
-
                         if (PipesConnect > 0)
                         {
                             PipesConnect--;
                         }
 
-                        Pipes[PipeNumber].WriteResponse(resultCheckUser);
+                        //Pipes[PipeNumber].WriteResponse(resultCheckUser);
                         std::cout << "Testing Message. Client disconnected.\n";
                         Pipes[PipeNumber].DisconnectClient();
 
-                        Pipes[PipeNumber].WaitClient();
+                        //Pipes[PipeNumber].WaitClient();
                         if (Pipes[PipeNumber].CanClose() == false)
                         {
                             std::cout << "В канал не было передано никаких данных со стороны клиента. Повторить попытку чтения данныхY или y - да / любая другая клавиша - нет)?" << std::endl;
@@ -295,7 +270,7 @@ int main()
                 Message.clear(); // makes size of string == 0
 
 
-                std::cout << "Ожидание подключения клиентов..." << std::endl;
+                //std::cout << "Ожидание подключения клиентов..." << std::endl;
             }
 
         } while (1);
