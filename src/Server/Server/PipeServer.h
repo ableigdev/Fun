@@ -329,73 +329,8 @@ public:
         if (IsOpen())
         {
 
-            //readEvent = CreateEvent(NULL, TRUE, FALSE, "ReadFileEvent"); // пока не подходит
-            
-            /*if (ReadFile(hPipe, &Message.at(0), 100, &NBytesRead, &Overl) == TRUE)
-            {
-                if (NBytesRead != 0)
-                {
-                    CanCloseFlag = true;
-                    PipeCurOperState = NBytesRead == 100 ? PIPE_READ_SUCCESS : PIPE_READ_PART;
-                    fPendingIOComplete = false;
-                    return true;
-                }
-
-                CanCloseFlag = true;
-                fPendingIOComplete = true;
-                PipeCurOperState = PIPE_JUST_CONNECTED;
-
-                //CloseHandle(hPipe);
-
-                return false;
-            }
-            else
-            {
-                static int err;
-                switch (GetLastError())
-                {
-                case ERROR_IO_PENDING:
-                    std::cout << "ERROR_IO_PENDING\n";
-                    Sleep(1000);
-                    //setEvent(readEvent);
-                    break;
-                case ERROR_HANDLE_EOF:
-                    std::cout << "ERROR_HANDLE_EOF\n";
-                    break;
-                case ERROR_BROKEN_PIPE:
-                    std::cout << "ERROR_BROKEN_PIPE\n";
-                    break;
-                case ERROR_MORE_DATA:
-                    std::cout << "ERROR_MORE_DATA\n";
-                    break;
-                default:
-                    break;
-                }
-
-                //В противном случае проверка состояния канала и изменение поля его состояния
-                //CheckError();
-                CanCloseFlag = true;
-                fPendingIOComplete = true;
-                PipeCurOperState = PIPE_JUST_CONNECTED;
-                //CloseHandle(hPipe);
-
-            }*/
-
-
-            /*
-                Код выше пока не удаляю ибо периодически появляется то, что надо перенести оттуда
-
-                На данный моомент задача после закрытия канала убрать вечный цикл выдающий ошибку.
-                пытался сделать это с помощью этого:
-                    CanCloseFlag = true;
-                    fPendingIOComplete = true;
-                Но, не получилось. Надо еще подумать...
-
-            */
-
             bool fOverlapped = FALSE;
 
-            //if (!ReadFile(hPipe, &Message.at(0), 100, &NBytesRead, &Overl))
             if (!ReadFile(hPipe, &Message.at(0), sizeof(Message), &NBytesRead, &Overl))
                 //BUG: out of range. It happens when server 
             {
@@ -403,10 +338,18 @@ public:
                 {
                     //произошла какая-то ошибка при чтении из пайпа
                     if (GetLastError() == CLIENT_DISCONNECT)
+                    {
                         std::cout << "Client disconnected! \n";
+                        DisconnectClient();
+                        WaitClient();
+                        PipeCurOperState = PIPE_LOST_CONNECT;
+                        return true;
+                    }
                     else
                     {
-                        std::cout << "Some error heppened" << std::endl;
+                        std::cout << "Some error happened" << std::endl;
+                        PipeCurOperState = PIPE_LOST_CONNECT;
+                        return true;
                     }
                     
                     CanCloseFlag = false;
@@ -443,7 +386,6 @@ public:
                 {
                     //Операция была выполнена асинхронно, но что-то пошло не так
                     CancelIo(hPipe);
-                    //CloseHandle(hPipe);
                     std::cout << "error reading file \n";
 
                 }

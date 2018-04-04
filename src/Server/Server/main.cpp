@@ -207,6 +207,7 @@ int main()
                             //break;
                         } while (!flag);
 
+
                         /*
                         Отключение клиента. В этом случае происходит вывод данных, прочитанных из канала в файл и
                         их очистка в структуре данных, уменьшения количество подключенных клиентов на 1,
@@ -214,6 +215,7 @@ int main()
                         */
 
                     case PIPE_LOST_CONNECT:
+
                         bool resultCheckUser = false;
                         long long latency = (serverMode) ? 1 : 0;
                         int i = 0;
@@ -221,24 +223,6 @@ int main()
                         bool firstTimeFlag = true;
 
 
-                        /*
-                        std::cout << "Testing Message. Write Response" << std::endl;
-                        auto tempData = PipeInfo[PipeNumber].getData(); // считанные логин и пароль
-                        bool resultCheckUser = Pipes[PipeNumber].checkUser(tempData); // результат проверки юзера
-                        int i = 1;
-                        long long latency = (serverMode) ? 1 : 0;
-                        Pipes[PipeNumber].WriteResponse(resultCheckUser);
-
-                        //for debug----------------------------------------
-                        std::cout << "Testing Message. Client auth status: ";
-                        if (resultCheckUser) std::cout << "TRUE";
-                        else std::cout << "FALSE";
-                        std::cout << std::endl;
-                        //--------------------------------------------------
-                        */
-
-                        // в идеале было бы сделать всё проверку сверху в первой итерации цикла, а то повторение одного и того же кода... Неправильо это. 
-                        // 04.04 - убрал я вашу индусятину, но пришлось щипотку своей добавить
                         while (!resultCheckUser && i < MAX_COUNTER_ATTEMPT)
                         {
                             Sleep(latency);
@@ -275,7 +259,7 @@ int main()
                         }
 
                         Pipes[PipeNumber].WriteResponse(resultCheckUser);
-                        std::cout << "Testing Message. Client disconnected.";
+                        std::cout << "Testing Message. Client disconnected.\n";
                         Pipes[PipeNumber].DisconnectClient();
 
                         Pipes[PipeNumber].WaitClient();
