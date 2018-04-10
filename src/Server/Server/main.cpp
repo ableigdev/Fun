@@ -108,8 +108,7 @@ int main()
             */
 
             PipeNumber = WaitForMultipleObjects(MAX_PIPE_INST, hEvents, FALSE, INFINITE) - WAIT_OBJECT_0;
-            bool flag = true;
-
+         
             if (!file.is_open())
             {
                 file.open(FName);
@@ -137,7 +136,7 @@ int main()
                     long long latency = (serverMode) ? 1 : 0;
                     int i = 0;
                     auto tempData = PipeInfo[PipeNumber].getData();
-                    bool firstTimeFlag = true;
+					bool hasData = false; // Флаг для проверки наличия данных в канале (чтобы сервер в случае неправильного логина или пароля гарантировано 3 раза считал данные)
 
                     /*
                     Если установлен признак завершения асинхронной операции для указанного экземпляра канала,
@@ -170,52 +169,47 @@ int main()
                         latency = (serverMode) ? 1 : 0;
                         i = 0;
                         tempData = PipeInfo[PipeNumber].getData();
-                        firstTimeFlag = true;
 
-
-                        while (!resultCheckUser && i < MAX_COUNTER_ATTEMPT)
+						// Если логин/пароль неправильный и счетчик поптыок меньше макс. кол-ву попыток, а также клиент не отключился раньше времени
+                        while (!resultCheckUser && i < MAX_COUNTER_ATTEMPT && Pipes[PipeNumber].GetState() != PIPE_LOST_CONNECT)
                         {
                             Sleep(latency);
 
-                            if ((firstTimeFlag && Pipes[PipeNumber].ReadMessage(Message)) || Pipes[PipeNumber].ReadMessage(Message)) // если данные есть в канале
+                            if (Pipes[PipeNumber].ReadMessage(Message)) // если данные есть в канале
                             {
-                             
-                                if (Pipes[PipeNumber].GetState() != PIPE_NOT_CONNECTED)
-                                {
-                                    firstTimeFlag = false; // НЕМНОГО ПО ИНДУССКИ, НО И ВАШ КОД БЫЛ НЕ ОЧЕНЬ
+								hasData = true;
+								PipeInfo[PipeNumber].ReadVal(Message); // записываем их в вектор
+								tempData = PipeInfo[PipeNumber].getData(); // получаем элемент вектора
+								std::cout << "Testing Message. Write Response" << std::endl;
+								resultCheckUser = Pipes[PipeNumber].checkUser(tempData); // сверяем логин и пароль с базой
+								Pipes[PipeNumber].WriteResponse(resultCheckUser); // отправляем результат проверки
 
-                                    PipeInfo[PipeNumber].ReadVal(Message); // записываем их в вектор
-                                    tempData = PipeInfo[PipeNumber].getData(); // получаем элемент вектора
-                                    std::cout << "Testing Message. Write Response" << std::endl;
-                                    resultCheckUser = Pipes[PipeNumber].checkUser(tempData); // сверяем логин и пароль с базой
-                                    Pipes[PipeNumber].WriteResponse(resultCheckUser); // отправляем результат проверки
+								Message.clear(); // Очищаем буфер
 
-                                    //for debug----------------------------------------
-                                    std::cout << "Testing Message. Client auth status: ";
-                                    if (resultCheckUser)
-                                        std::cout << "TRUE";
-                                    else
-                                        std::cout << "FALSE";
-                                    std::cout << std::endl;
-                                    //--------------------------------------------------
+								//for debug----------------------------------------
+								std::cout << "Testing Message. Client auth status: ";
+								if (resultCheckUser)
+								{
+									std::cout << "TRUE";
+								}
+								else
+								{
+									std::cout << "FALSE";
+									Message.resize(100); // Расширяем размер буфера до исходного
+								}
+								std::cout << std::endl;
+								//--------------------------------------------------
 
-                                    PipeInfo[PipeNumber].ClearData();
-                                    tempData.clear();
-                                    ++i;
-                                    latency <<= 5;
-                                }
-                                else
-                                {
-                                    Pipes[PipeNumber].setState(PIPE_LOST_CONNECT);
-
-                                    if (PipesConnect != 0)
-                                    {
-                                        --PipesConnect;
-                                    }
-
-                                    break;
-                                }
-                            }
+								PipeInfo[PipeNumber].ClearData();
+								tempData.clear();
+								++i;
+								latency <<= 5;
+                            }	
+							else if (hasData) // Если считали данные, то продолжаем ожидать следующую порцию данных от клиента 
+							{
+								++i;
+								hasData = false;
+							}
                         }
                         Pipes[PipeNumber].setState(PIPE_LOST_CONNECT);
                         break;

@@ -333,76 +333,19 @@ public:
 
         if (IsOpen())
         {
+			ReadFile(hPipe, &Message.at(0), sizeof(Message), &NBytesRead, &Overl);
 
-            bool fOverlapped = FALSE;
-
-            if (!ReadFile(hPipe, &Message.at(0), sizeof(Message), &NBytesRead, &Overl))
-                //BUG: out of range. It happens when server 
-            {
-                if (GetLastError() != ERROR_IO_PENDING)
-                {
-                    //произошла какая-то ошибка при чтении из пайпа
-                    if (GetLastError() == CLIENT_DISCONNECT)
-                    {
-                        std::cout << "Client disconnected! \n";
-                        DisconnectClient();
-                        WaitClient();
-                        PipeCurOperState = PIPE_LOST_CONNECT;
-                        return true;
-                    }
-                    else
-                    {
-                        std::cout << "Some error happened" << std::endl;
-                        PipeCurOperState = PIPE_LOST_CONNECT;
-                        return true;
-                    }
-                    
-                    CanCloseFlag = false;
-                    fPendingIOComplete = true;
-                    PipeCurOperState = PIPE_NO_OPERATION;
-                }
-                else
-                {
-                    fOverlapped = TRUE;
-                }
-            }
-            else
-            {
-                // Operation has completed immediately.
-                fOverlapped = FALSE;
-            }
-
-            if (fOverlapped)
-            {
-                // Wait for the operation to complete before continuing.
-                // You could do some background work if you wanted to.
-                if (GetOverlappedResult(hPipe, &Overl, &NBytesRead, TRUE))
-                {
-                    //Если чтение произошло успешно
-                    std::cout << "Testing Message. Receiving data from client. \n";
-                    Message[NBytesRead] = '\0'; //making end of string for parser
-                    CanCloseFlag = true;
-                    fPendingIOComplete = true;
-                    PipeCurOperState = PIPE_JUST_CONNECTED;
-
-                    return true;
-                }
-                else
-                {
-                    //Операция была выполнена асинхронно, но что-то пошло не так
-                    CancelIo(hPipe);
-                    std::cout << "error reading file \n";
-
-                }
-            }
-            else
-            {
-                //Если чтение произошло успешно
-                Message[NBytesRead] = '\0';
-                CanCloseFlag = true;
-                fPendingIOComplete = true;
-                PipeCurOperState = PIPE_JUST_CONNECTED;
-            }
+			if (Message[0] != '\0')
+			{
+				CanCloseFlag = true;
+				PipeCurOperState = PIPE_READ_SUCCESS;
+				fPendingIOComplete = false;
+				return true;
+			}
+			else
+			{
+				CheckError();
+			}
         }
 
 
@@ -513,9 +456,7 @@ public:
     {
         return fPendingIOComplete;
     }
-
-    //------------------------------------------------------------------
-
+	//------------------------------------------------------------------
 
     bool CanClose()
     {
