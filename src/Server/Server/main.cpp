@@ -8,6 +8,7 @@
 #define MAX_PIPE_INST	3
 #define PIPE_NAME		L"\\\\.\\pipe\\pipe_example"
 #define MAX_COUNTER_ATTEMPT 3
+#define EXHAUSTED_ATTEMPTS -1
 
 int main()
 {
@@ -211,6 +212,11 @@ int main()
 								hasData = false;
 							}
                         }
+
+						if (i >= MAX_COUNTER_ATTEMPT)
+						{
+							Pipes[PipeNumber].WriteResponse(EXHAUSTED_ATTEMPTS);
+						}
                         Pipes[PipeNumber].setState(PIPE_LOST_CONNECT);
                         break;
 

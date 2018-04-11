@@ -123,20 +123,18 @@ public:
 
 	//------------------------------------------------------------------
 
-	bool ReadResponse()
+	short int ReadResponse()
 	{
 		if (IsPipeConnected())
 		{
 			DWORD NBytesRead;
-			bool Message;
-            if (!ReadFile(hPipe, &Message, 1, &NBytesRead, NULL))
+			short int Message;
+            if (ReadFile(hPipe, &Message, sizeof(Message), &NBytesRead, NULL) == TRUE)
             {
-                return false;
+                return Message;
             }
-			
-			return Message;
 		}
-		return false;
+		return -1;
 	}
 	/*
 	Доступный пользователю метод, с помощью которого осуществляется проверка удачности
@@ -176,25 +174,46 @@ public:
 					std::cout << "\nОшибка записи в именованный канал!\n";
 				}
 
-				if (ReadResponse())
+				switch (ReadResponse())
 				{
-					std::cout << "\nАвторизация прошла успешно!\n";
-					break;
-				}
-				else
-				{
-					std::cout << "\nНеверный пароль или логин!\n";
-					std::cout << "Повторить ввод? (N - прекратить вход)";
-					char answ = 'y';
-					std::cin >> answ; 
-					if (answ == 'N' || answ == 'n')
+					case 0:
 					{
+						std::cout << "\nНеверный пароль или логин!\n";
+						std::cout << "Повторить ввод? (N - прекратить вход)";
+						char answ = 'y';
+						std::cin >> answ;
+						if (answ == 'N' || answ == 'n')
+						{
+							break;
+						}
+						break;
+					}
+
+					case 1:
+					{
+						std::cout << "\nАвторизация прошла успешно!\n";
+						hPipe = INVALID_HANDLE_VALUE;
+						break;
+					}
+
+					case -1:
+					{
+						std::cout << "\nКоличество попыток подключения исчерпано!"  
+							<< "\nСвязь с сервером прервана!" << std::endl;
+						
+						hPipe = INVALID_HANDLE_VALUE;
+						break;
+					}
+					default:
+					{
+						std::cout << "\nНеизвестная ошибка!" << std::endl;
 						break;
 					}
 				}
+				
 			} while (IsPipeConnected());
 
-			std::cout << "\nНажмите любую клавишу для завершения программы (выполнится отключение от именованного канала " << PipeName << ")\n";
+			std::cout << "\nРабота с сервером завершена.\n";
 		}
 		else
 			std::cout << "\nОшибка соединения с сервером (код ошибки: " << GetLastError() << ")!\n";

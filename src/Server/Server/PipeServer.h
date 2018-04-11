@@ -354,13 +354,13 @@ public:
 
     //------------------------------------------------------------------
 
-    void WriteResponse(bool Message)
+    void WriteResponse(short int Message)
     {
         if (IsOpen())
         {
             DWORD NBWr;
 
-            if (!WriteFile(hPipe, &Message, 1, &NBWr, NULL))
+            if (!WriteFile(hPipe, &Message, sizeof(Message), &NBWr, NULL))
             {
 
                 std::cout << "Ошибка записи в канал " << GetLastError();
