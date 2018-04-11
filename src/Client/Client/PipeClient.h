@@ -2,6 +2,7 @@
 
 #include <windows.h>
 #include <cstdlib>
+#include <string>
 
 template <typename T> 
 class CPipeClient
@@ -56,7 +57,7 @@ public:
 			mbstowcs(&wPipeName[0], PipeName, sizePipe);
 
 			hPipe = CreateFile(wPipeName.c_str(),
-				GENERIC_WRITE,
+				GENERIC_READ | GENERIC_WRITE,
 				0,
 				NULL,
 				OPEN_EXISTING,
@@ -110,17 +111,31 @@ public:
 	канал, если подключение к нему выполнено успешно.
 	*/
 
-	bool WriteMessage(T &Message)
+	bool WriteMessage(std::basic_string<T> &Message)
 	{
 		if (IsPipeConnected())
 		{
 			DWORD NBWr;
-			return WriteFile(hPipe, (LPVOID)(&Message), sizeof(Message), &NBWr, NULL) == TRUE;
+			return WriteFile(hPipe, &Message.at(0), sizeof(Message), &NBWr, NULL) == TRUE;
 		}
 		return false;
 	}
 
 	//------------------------------------------------------------------
+
+	short int ReadResponse()
+	{
+		if (IsPipeConnected())
+		{
+			DWORD NBytesRead;
+			short int Message;
+            if (ReadFile(hPipe, &Message, sizeof(Message), &NBytesRead, NULL) == TRUE)
+            {
+                return Message;
+            }
+		}
+		return -1;
+	}
 	/*
 	Доступный пользователю метод, с помощью которого осуществляется проверка удачности
 	подключения к экземпляру именованного канала
@@ -130,5 +145,59 @@ public:
 	{
 		return hPipe != INVALID_HANDLE_VALUE;
 	}
+
+	//------------------------------------------------------------------
+	/*
+	Доступный пользователю метод, с помощью которого осуществляется подключение к серверу и передача
+	*/
+
+
+	void authorization(const std::basic_string<T>& login, const std::basic_string<T>& password)
+	{
+		std::basic_string<T> str(login + "/" + password);
+
+		if (!(WriteMessage(str)))
+		{
+			std::cout << "\nОшибка записи в именованный канал!\n";
+		}
+
+		switch (ReadResponse())
+		{
+			case 0:
+			{
+				std::cout << "\nНеверный пароль или логин!\n";
+				std::cout << "Повторить ввод? (N - прекратить вход): ";
+				char answ;
+				std::cin >> answ;
+				if (answ == 'N' || answ == 'n')
+				{
+					break;
+				}
+				break;
+			}
+
+			case 1:
+			{
+				std::cout << "\nАвторизация прошла успешно!\n";
+				hPipe = INVALID_HANDLE_VALUE;
+				break;
+			}
+
+			case -1:
+			{
+				std::cout << "\nКоличество попыток подключения исчерпано!" << std::endl;
+						
+				hPipe = INVALID_HANDLE_VALUE;
+				break;
+			}
+			default:
+			{
+				std::cout << "\nНеизвестная ошибка!" << std::endl;
+				break;
+			}
+		}
+	}
+
+	//------------------------------------------------------------------
 
 };

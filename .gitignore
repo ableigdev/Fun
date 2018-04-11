@@ -9,6 +9,7 @@
 # Any user files
 *.user
 *.txt
+*.log
 
 # Output files
 bin/
