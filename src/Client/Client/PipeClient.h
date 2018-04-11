@@ -152,82 +152,52 @@ public:
 	*/
 
 
-	void ConnectToServer(char *PipeName, std::basic_string<T>& login, std::basic_string<T>& password)
+	void authorization(const std::basic_string<T>& login, const std::basic_string<T>& password)
 	{
-		if (ConnectPipe(PipeName))
+		std::basic_string<T> str(login + "/" + password);
+
+		if (!(WriteMessage(str)))
 		{
-			InitMessageMode();
-
-			do//будем вводить логин и пароль пока не получим успешную авторизацию
-			{
-				std::cout << "\nВведите логин: ";
-				std::cin >> login;
-
-				std::cout << "Введите пароль: ";
-				std::cin >> password;
-				//InitMessageMode();
-
-				std::basic_string<T> str(login + "/" + password);
-
-				if (!(WriteMessage(str)))
-				{
-					std::cout << "\nОшибка записи в именованный канал!\n";
-				}
-
-				switch (ReadResponse())
-				{
-					case 0:
-					{
-						std::cout << "\nНеверный пароль или логин!\n";
-						std::cout << "Повторить ввод? (N - прекратить вход)";
-						char answ = 'y';
-						std::cin >> answ;
-						if (answ == 'N' || answ == 'n')
-						{
-							break;
-						}
-						break;
-					}
-
-					case 1:
-					{
-						std::cout << "\nАвторизация прошла успешно!\n";
-						hPipe = INVALID_HANDLE_VALUE;
-						break;
-					}
-
-					case -1:
-					{
-						std::cout << "\nКоличество попыток подключения исчерпано!"  
-							<< "\nСвязь с сервером прервана!" << std::endl;
-						
-						hPipe = INVALID_HANDLE_VALUE;
-						break;
-					}
-					default:
-					{
-						std::cout << "\nНеизвестная ошибка!" << std::endl;
-						break;
-					}
-				}
-				
-			} while (IsPipeConnected());
-
-			std::cout << "\nРабота с сервером завершена.\n";
+			std::cout << "\nОшибка записи в именованный канал!\n";
 		}
-		else
-			std::cout << "\nОшибка соединения с сервером (код ошибки: " << GetLastError() << ")!\n";
 
+		switch (ReadResponse())
+		{
+			case 0:
+			{
+				std::cout << "\nНеверный пароль или логин!\n";
+				std::cout << "Повторить ввод? (N - прекратить вход): ";
+				char answ;
+				std::cin >> answ;
+				if (answ == 'N' || answ == 'n')
+				{
+					break;
+				}
+				break;
+			}
+
+			case 1:
+			{
+				std::cout << "\nАвторизация прошла успешно!\n";
+				hPipe = INVALID_HANDLE_VALUE;
+				break;
+			}
+
+			case -1:
+			{
+				std::cout << "\nКоличество попыток подключения исчерпано!" << std::endl;
+						
+				hPipe = INVALID_HANDLE_VALUE;
+				break;
+			}
+			default:
+			{
+				std::cout << "\nНеизвестная ошибка!" << std::endl;
+				break;
+			}
+		}
 	}
 
 	//------------------------------------------------------------------
-	/*
-	Доступный пользователю метод, с помощью которого осуществляется попытка авторизации
-	*/
-
-	bool authorization(bool serverAnswer = 0)
-	{
-		
-	}
 
 };

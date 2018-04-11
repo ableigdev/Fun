@@ -20,7 +20,7 @@ int main()
 	std::basic_string<char> login{};
 	std::basic_string<char> password{};
 
-	char *FName = new char[MAX_PATH], answer;
+	char *FName = new char[MAX_PATH];
 	bool menuExit = false;
 	int alphType = 0;
 
@@ -50,7 +50,26 @@ int main()
 		{
 		case 1:
 			//передаем пустые логин и пароль
-			PC.ConnectToServer(PipeName, login, password);
+			if (PC.ConnectPipe(PipeName))
+			{
+				PC.InitMessageMode();
+				do
+				{
+					std::cout << "\nВведите логин: ";
+					std::cin >> login;
+
+					std::cout << "Введите пароль: ";
+					std::cin >> password;
+
+					PC.authorization(login, password);
+				} while (PC.IsPipeConnected());
+
+				std::cout << "\nРабота с сервером завершена.\n";
+			}
+			else
+			{
+				std::cout << "\nОшибка соединения с сервером (код ошибки: " << GetLastError() << ")!\n";
+			}
 			break;
 
 		case 2:
@@ -68,7 +87,7 @@ int main()
 			
 			//PC.bruteForce(/*alphabet type*/ alphType)
 
-			PC.ConnectToServer(PipeName, login, password);
+			//PC.ConnectToServer(PipeName, login, password);
 			break;
 
 		case 3:
