@@ -155,6 +155,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="PipeClient.h" />
+    <ClInclude Include="Rules.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
