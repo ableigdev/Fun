@@ -154,6 +154,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BruteForce.h" />
     <ClInclude Include="PipeClient.h" />
     <ClInclude Include="Rules.h" />
   </ItemGroup>
