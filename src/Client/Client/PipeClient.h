@@ -111,7 +111,7 @@ public:
 	канал, если подключение к нему выполнено успешно.
 	*/
 
-	bool WriteMessage(std::basic_string<T> &Message)
+	bool WriteMessage(const std::basic_string<T> &Message)
 	{
 		if (IsPipeConnected())
 		{
@@ -152,7 +152,7 @@ public:
 	*/
 
 
-	void authorization(const std::basic_string<T>& login, const std::basic_string<T>& password)
+	int authorization(const std::basic_string<T>& login, const std::basic_string<T>& password)
 	{
 		std::basic_string<T> str(login + "/" + password);
 
@@ -166,21 +166,14 @@ public:
 			case 0:
 			{
 				std::cout << "\nНеверный пароль или логин!\n";
-				std::cout << "Повторить ввод? (N - прекратить вход): ";
-				char answ;
-				std::cin >> answ;
-				if (answ == 'N' || answ == 'n')
-				{
-					break;
-				}
-				break;
+				return 0;
 			}
 
 			case 1:
 			{
 				std::cout << "\nАвторизация прошла успешно!\n";
 				hPipe = INVALID_HANDLE_VALUE;
-				break;
+				return 1;
 			}
 
 			case -1:
@@ -188,7 +181,7 @@ public:
 				std::cout << "\nКоличество попыток подключения исчерпано!" << std::endl;
 						
 				hPipe = INVALID_HANDLE_VALUE;
-				break;
+				return -1;
 			}
 			default:
 			{
