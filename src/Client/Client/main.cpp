@@ -12,6 +12,7 @@
 #define MAX_LOG_PASS_LENGTH 50
 
 #include "PipeClient.h"
+#include "BruteForce.h"
 
 
 
@@ -32,6 +33,10 @@ int main()
 	std::cin >> ServerName;
 
 	CPipeClient<char> PC;
+	BruteForce bruteForce;
+	std::string alphabet{};
+	short int maxPasswordLength = 0;
+
 	strcat(strcat(strcpy(PipeName, PIPE_NAME_PREFIX), ServerName), PIPE_NAME);
 	std::cout << PipeName << std::endl;
 
@@ -61,7 +66,17 @@ int main()
 					std::cout << "Введите пароль: ";
 					std::cin >> password;
 
-					PC.authorization(login, password);
+					if (PC.authorization(login, password) == 0)
+					{
+						char answer;
+						std::cout << "Повторить ввод? (Y/N): ";
+						std::cin >> answer;
+						if (answer == 'N' || answer == 'n')
+						{
+							PC.WriteMessage("C");
+							break;
+						}
+					}
 				} while (PC.IsPipeConnected());
 
 				std::cout << "\nРабота с сервером завершена.\n";
@@ -76,7 +91,7 @@ int main()
 			std::cout << "\nТип алфавита пароля: \n"
 				<< "1) Маленькие латинские буквы - 25 символов (по умолчанию)\n"
 				<< "2) Маленькие и большие латинские буквы + цифры - 62 символа\n"
-				<< "3) Маленькие и большие латинские цифры + цифры + маленькие и большие русские буквы - 128 символов";
+				<< "3) Маленькие и большие латинские цифры + цифры + маленькие и большие русские буквы - 128 символов" << std::endl;
 
 			std::cin >> alphType;
 			if (alphType > 3 || alphType < 1)
@@ -84,6 +99,19 @@ int main()
 				std::cout << "\nВыбран тип по умолчанию. \n";
 				alphType = 1;
 			}
+			
+			alphabet = bruteForce.getAlphabet(alphType);
+
+			std::cout << "Введите максимально допустимую длину пароля: ";
+			std::cin >> maxPasswordLength;
+
+			std::cout << "Введите логин: ";
+			std::cin >> login;
+
+			bruteForce.setAlphabet(alphabet);
+			bruteForce.setPasswordLength(maxPasswordLength);
+
+			bruteForce.brute();
 			
 			//PC.bruteForce(/*alphabet type*/ alphType)
 
