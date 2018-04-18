@@ -178,6 +178,11 @@ int main()
 
                             if (Pipes[PipeNumber].ReadMessage(Message)) // если данные есть в канале
                             {
+								if (Message == "C" || Message == "c")
+								{
+									Pipes[PipeNumber].setState(PIPE_LOST_CONNECT);
+									break;
+								}
 								hasData = true;
 								PipeInfo[PipeNumber].ReadVal(Message); // записываем их в вектор
 								tempData = PipeInfo[PipeNumber].getData(); // получаем элемент вектора
