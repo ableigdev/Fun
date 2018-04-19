@@ -1,4 +1,6 @@
 #include "BruteForce.h"
+#include <vector>
+#include <iostream>
 
 BruteForce::BruteForce()
 	: m_PasswordLength(0)
@@ -19,6 +21,16 @@ void BruteForce::setPasswordLength(short int value)
 short int BruteForce::getPasswordLength() const
 {
 	return m_PasswordLength;
+}
+
+void BruteForce::setLogin(const std::string& str)
+{
+	m_Login = str;
+}
+
+std::string BruteForce::getLogin() const
+{
+	return m_Login;
 }
 
 std::string BruteForce::getAlphabet(int value)
@@ -45,7 +57,48 @@ std::string BruteForce::getAlphabet(int value)
 	}
 }
 
-void BruteForce::brute()
+void BruteForce::brute(CPipeClient<char>& PC)
 {
-	
+	std::vector<int> indexer{};
+	indexer.resize(m_PasswordLength);
+
+	std::string currentPassword{};
+	currentPassword.resize(m_PasswordLength);
+
+	int alphabetSize = m_Alphabet.size();
+
+	while (PC.IsPipeConnected())
+	{
+		for (int i = m_PasswordLength - 1; i >= 0; --i)
+		{
+			if (i != 0)
+			{
+				if (indexer[i] == alphabetSize)
+				{
+					indexer[i] = 0;
+					++indexer[i - 1];
+				}
+			}
+		}
+
+		for (int i = 0; i < m_PasswordLength; ++i)
+		{
+			currentPassword[i] = m_Alphabet[indexer[i]];
+		}
+
+		if (PC.authorization(m_Login, currentPassword) == 1)
+		{
+			break;
+		}
+
+		for (int i = 0; i < m_PasswordLength; ++i)
+		{
+			if (indexer[i] != alphabetSize - 1)
+			{
+				break;
+			}
+		}
+
+		++indexer[m_PasswordLength - 1];
+	}
 }

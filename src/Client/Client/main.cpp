@@ -108,10 +108,16 @@ int main()
 			std::cout << "¬ведите логин: ";
 			std::cin >> login;
 
+			bruteForce.setLogin(login);
 			bruteForce.setAlphabet(alphabet);
 			bruteForce.setPasswordLength(maxPasswordLength);
 
-			bruteForce.brute();
+			if (PC.ConnectPipe(PipeName))
+			{
+				PC.InitMessageMode();
+				bruteForce.brute(PC);
+			}
+			
 			
 			//PC.bruteForce(/*alphabet type*/ alphType)
 
