@@ -7,7 +7,7 @@
 
 #define MAX_PIPE_INST	3
 #define PIPE_NAME		L"\\\\.\\pipe\\pipe_example"
-#define MAX_COUNTER_ATTEMPT 3
+#define MAX_COUNTER_ATTEMPT 20000
 #define EXHAUSTED_ATTEMPTS -1
 
 int main()
