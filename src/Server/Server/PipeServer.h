@@ -362,7 +362,6 @@ public:
 
             if (!WriteFile(hPipe, &Message, sizeof(Message), &NBWr, NULL))
             {
-
                 std::cout << "Ошибка записи в канал " << GetLastError();
             }
         }
@@ -378,7 +377,6 @@ public:
 
     bool GetPendingResult(DWORD &NBytesRead)
     {
-
         /*
         Если асинхронная операция завершена успешно, то изменение полей состояния канала и
         состояния текущей операции в канале в случае необходимости

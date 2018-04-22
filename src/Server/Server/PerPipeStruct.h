@@ -31,10 +31,7 @@ private:
 
 public:
 
-	PerPipeStruct()
-	{
-		//ClearData();
-	}
+	default PerPipeStruct() {}
 
 	//---------------------------------------------------------------
 	/*
