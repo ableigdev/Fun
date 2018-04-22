@@ -164,7 +164,7 @@ int main()
 
                             if (Pipes[PipeNumber].ReadMessage(Message)) // если данные есть в канале
                             {
-								if (Message == "C" || Message == "c")
+								if (Message.size() == 1 && (Message == "C" || Message == "c"))
 								{
 									Pipes[PipeNumber].setState(PIPE_LOST_CONNECT);
 									break;
