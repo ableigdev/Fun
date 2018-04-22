@@ -7,7 +7,7 @@
 
 #define MAX_PIPE_INST	3
 #define PIPE_NAME		L"\\\\.\\pipe\\pipe_example"
-#define MAX_COUNTER_ATTEMPT 20
+#define MAX_COUNTER_ATTEMPT 20000
 #define EXHAUSTED_ATTEMPTS -1
 
 int main()
@@ -53,6 +53,8 @@ int main()
         std::cin.clear();
         std::cin >> serverMode;
 
+        int attempt_counter[MAX_PIPE_INST] = { 0 };
+
         for (int i = 0; i < MAX_PIPE_INST; i++)
         {
             /*
@@ -81,6 +83,8 @@ int main()
                 return 0;
             }
         }
+
+
         /*
         Бесконечный цикл, составляющий логическое ядро сервера
         */
@@ -88,7 +92,7 @@ int main()
         {
             std::cout << "Ожидание подключения клиентов..." << std::endl;
             Message.resize(100);
-
+            
             /*
             Ожидания перехода в свободное состояние события, связанного с каким-то из каналов,
             что свидетельствует о завершении асинхронной операции, и получения номера этого канала.
@@ -96,6 +100,7 @@ int main()
             АВТОМАТИЧЕСКИ НЕ ИЗМЕНЯЕТ.
             */
 
+            // TODO: вынести это за пределы функции while, чтобы не обращаться каждый раз
             PipeNumber = WaitForMultipleObjects(MAX_PIPE_INST, hEvents, FALSE, INFINITE) - WAIT_OBJECT_0;
          
             if (!file.is_open())
@@ -154,12 +159,13 @@ int main()
 
                         resultCheckUser = false;
                         latency = (serverMode) ? 1 : 0;
-                        i = 0;
+                        
                         tempData = PipeInfo[PipeNumber].getData();
 
 						// Если логин/пароль неправильный и счетчик поптыок меньше макс. кол-ву попыток, а также клиент не отключился раньше времени
-                        while (!resultCheckUser && i < MAX_COUNTER_ATTEMPT && Pipes[PipeNumber].GetState() != PIPE_LOST_CONNECT)
+                        while (!resultCheckUser && attempt_counter[PipeNumber] < MAX_COUNTER_ATTEMPT && Pipes[PipeNumber].GetState() != PIPE_LOST_CONNECT)
                         {
+
                             Sleep(latency);
 
                             if (Pipes[PipeNumber].ReadMessage(Message)) // если данные есть в канале
@@ -186,7 +192,7 @@ int main()
 								}
 								else
 								{
-									std::cout << "FALSE" << " Attempt №" << i;
+									std::cout << "FALSE" << " Attempt №" << attempt_counter[PipeNumber];
 									Message.resize(100); // Расширяем размер буфера до исходного
 								}
 								std::cout << std::endl;
@@ -194,21 +200,26 @@ int main()
 
 								PipeInfo[PipeNumber].ClearData();
 								tempData.clear();
-								++i;
+								++attempt_counter[PipeNumber];
 								latency <<= 5;
                             }	
 							else if (hasData) // Если считали данные, то продолжаем ожидать следующую порцию данных от клиента 
 							{
-								++i;
+								++attempt_counter[PipeNumber];
 								hasData = false;
 							}
+                            else
+                            {
+                                break;
+                            }
                         }
 
-						if (i >= MAX_COUNTER_ATTEMPT)
+						if (attempt_counter[PipeNumber] >= MAX_COUNTER_ATTEMPT)
 						{
-							Pipes[PipeNumber].WriteResponse(EXHAUSTED_ATTEMPTS);
+							Pipes[PipeNumber].WriteResponse(EXHAUSTED_ATTEMPTS); 
+                            Pipes[PipeNumber].setState(PIPE_LOST_CONNECT);
 						}
-                        Pipes[PipeNumber].setState(PIPE_LOST_CONNECT);
+                        
                         break;
 
                         /*
@@ -249,6 +260,11 @@ int main()
             if (PipesConnect == 0)
             {
                 std::cout << "Все клиенты отключены! Продолжить работу (Y или y - да / любая другая клавиша - нет)? ";
+                for (int i = 0; i < MAX_PIPE_INST; i++)
+                {
+                    attempt_counter[i] = 0;
+                }
+                
                 std::cin >> answer;
                 if (answer != 'Y' && answer != 'y')
                 {

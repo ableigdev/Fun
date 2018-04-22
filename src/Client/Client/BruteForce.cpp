@@ -87,7 +87,9 @@ void BruteForce::brute(CPipeClient<char>& PC)
 			currentPassword[i] = m_Alphabet[indexer[i]];
 		}
 
-		Sleep(2000);
+		//Sleep(100);
+        //std::cout << currentPassword << std::endl;
+
 		if (PC.authorization(m_Login, currentPassword) == 1)
 		{
 			break;
