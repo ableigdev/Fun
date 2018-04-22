@@ -5,6 +5,8 @@
 #include "PipeServer.h"
 #include "PerPipeStruct.h"
 
+#include <ctime>
+
 #define MAX_PIPE_INST	3
 #define PIPE_NAME		L"\\\\.\\pipe\\pipe_example"
 #define MAX_COUNTER_ATTEMPT 20000
@@ -54,6 +56,7 @@ int main()
         std::cin >> serverMode;
 
         int attempt_counter[MAX_PIPE_INST] = { 0 };
+        int unblock_time[MAX_PIPE_INST] = { 0 };
 
         for (int i = 0; i < MAX_PIPE_INST; i++)
         {
@@ -166,51 +169,59 @@ int main()
                         while (!resultCheckUser && attempt_counter[PipeNumber] < MAX_COUNTER_ATTEMPT && Pipes[PipeNumber].GetState() != PIPE_LOST_CONNECT)
                         {
 
-                            Sleep(latency);
+                            //Sleep(latency);
 
-                            if (Pipes[PipeNumber].ReadMessage(Message)) // если данные есть в канале
+                            //clock() - функция получения текущего времени
+                            if (clock() >= unblock_time[PipeNumber])
                             {
-								if (Message.size() == 1 && (Message == "C" || Message == "c"))
-								{
-									Pipes[PipeNumber].setState(PIPE_LOST_CONNECT);
-									break;
-								}
-								hasData = true;
-								PipeInfo[PipeNumber].ReadVal(Message); // записываем их в вектор
-								tempData = PipeInfo[PipeNumber].getData(); // получаем элемент вектора
-								std::cout << "Testing Message. Write Response" << std::endl;
-								resultCheckUser = Pipes[PipeNumber].checkUser(tempData); // сверяем логин и пароль с базой
-								Pipes[PipeNumber].WriteResponse(resultCheckUser); // отправляем результат проверки
 
-								Message.clear(); // Очищаем буфер
+                                if (Pipes[PipeNumber].ReadMessage(Message)) // если данные есть в канале
+                                {
+                                    if (Message.size() == 1 && (Message == "C" || Message == "c"))
+                                    {
+                                        Pipes[PipeNumber].setState(PIPE_LOST_CONNECT);
+                                        break;
+                                    }
+                                    hasData = true;
+                                    PipeInfo[PipeNumber].ReadVal(Message); // записываем их в вектор
+                                    tempData = PipeInfo[PipeNumber].getData(); // получаем элемент вектора
+                                    std::cout << "Testing Message. Write Response" << std::endl;
+                                    resultCheckUser = Pipes[PipeNumber].checkUser(tempData); // сверяем логин и пароль с базой
+                                    Pipes[PipeNumber].WriteResponse(resultCheckUser); // отправляем результат проверки
 
-								//for debug----------------------------------------
-								std::cout << "Testing Message. Client auth status: ";
-								if (resultCheckUser)
-								{
-									std::cout << "TRUE";
-								}
-								else
-								{
-									std::cout << "FALSE" << " Attempt №" << attempt_counter[PipeNumber];
-									Message.resize(100); // Расширяем размер буфера до исходного
-								}
-								std::cout << std::endl;
-								//--------------------------------------------------
+                                    Message.clear(); // Очищаем буфер
 
-								PipeInfo[PipeNumber].ClearData();
-								tempData.clear();
-								++attempt_counter[PipeNumber];
-								latency <<= 5;
-                            }	
-							else if (hasData) // Если считали данные, то продолжаем ожидать следующую порцию данных от клиента 
-							{
-								++attempt_counter[PipeNumber];
-								hasData = false;
-							}
-                            else
-                            {
-                                break;
+                                    //for debug----------------------------------------
+                                    std::cout << "Testing Message. Client auth status: ";
+                                    if (resultCheckUser)
+                                    {
+                                        std::cout << "TRUE";
+                                    }
+                                    else
+                                    {
+                                        std::cout << "FALSE" << " Attempt №" << attempt_counter[PipeNumber];
+                                        Message.resize(100); // Расширяем размер буфера до исходного
+                                    }
+                                    std::cout << std::endl;
+                                    //--------------------------------------------------
+
+                                    PipeInfo[PipeNumber].ClearData();
+                                    tempData.clear();
+                                    ++attempt_counter[PipeNumber];
+
+                                    //latency <<= 5;
+                                    unblock_time[PipeNumber] = (clock() + (100 * attempt_counter[PipeNumber])) * serverMode;
+                                    break;
+                                }
+                                else if (hasData) // Если считали данные, то продолжаем ожидать следующую порцию данных от клиента 
+                                {
+                                    ++attempt_counter[PipeNumber];
+                                    hasData = false;
+                                }
+                                else
+                                {
+                                    break;
+                                }
                             }
                         }
 
