@@ -1,6 +1,7 @@
 #include "BruteForce.h"
 #include <vector>
 #include <iostream>
+#include <Windows.h>
 
 BruteForce::BruteForce()
 	: m_PasswordLength(0)
@@ -86,6 +87,7 @@ void BruteForce::brute(CPipeClient<char>& PC)
 			currentPassword[i] = m_Alphabet[indexer[i]];
 		}
 
+		Sleep(2000);
 		if (PC.authorization(m_Login, currentPassword) == 1)
 		{
 			break;

@@ -14,8 +14,6 @@
 #include "PipeClient.h"
 #include "BruteForce.h"
 
-
-
 int main()
 {
 	std::basic_string<char> login{};
@@ -25,7 +23,8 @@ int main()
 	bool menuExit = false;
 	int alphType = 0;
 
-	char *ServerName = new char[MAX_PATH], *PipeName = new char[MAX_PATH];
+	char *ServerName = new char[MAX_PATH];
+	char *PipeName = new char[MAX_PATH];
 
 	SetConsoleOutputCP(1251);
 
@@ -42,13 +41,12 @@ int main()
 
 	do
 	{
-		
 		std::cout << "\nЗапустить клиента в режиме: \n"
 					<< "1) Проверки связи \n"
 					<< "2) Взлома \n"
 					<< "3) Завершить работу клиента\n"
 					<< "Выбрано: ";
-		int mode = 0;
+		int mode;
 		std::cin >> mode;
 
 		switch (mode)
@@ -118,10 +116,6 @@ int main()
 				bruteForce.brute(PC);
 			}
 			
-			
-			//PC.bruteForce(/*alphabet type*/ alphType)
-
-			//PC.ConnectToServer(PipeName, login, password);
 			break;
 
 		case 3:
