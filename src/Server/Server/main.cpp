@@ -1,6 +1,8 @@
 #include <iostream>
 #include <fstream>
 #include <Windows.h>
+#include <sstream>
+
 
 #include "PipeServer.h"
 #include "PerPipeStruct.h"
@@ -12,8 +14,20 @@
 #define MAX_COUNTER_ATTEMPT 20000
 #define EXHAUSTED_ATTEMPTS -1
 
+std::string getCurDateStr(SYSTEMTIME st);
+
 int main()
 {
+    /*
+        Вывод в лог файл
+        сколько времени потрачено на "отбитие атаки"
+
+        в клиенте:
+        вывод сколько возможных паролей
+        сколько времени было затрачено на подбор пароля
+        
+    */
+
     /*
     Описание переменных:
     hEvents - массив из MAX_PIPE_INST элементов, содержащий дескрипторы событий;
@@ -39,6 +53,10 @@ int main()
     int PipesConnect = 0;
     bool serverMode = false;
     std::vector<User<char>> vec;
+    std::ofstream fout ("server_log.txt", std::ios_base::app); // вывод в лог
+    SYSTEMTIME st = {};
+    
+
 
     SetConsoleOutputCP(1251);
     std::cout << "Введите имя файла с логинами и паролями: ";
@@ -47,7 +65,13 @@ int main()
     file.open(FName);
 
     if (!file)
+    {
         std::cout << "Ошибка чтения файла с именем " << FName << "!" << std::endl;
+    }
+    else if(!fout)
+    {
+        std::cout << "Ошибка log файла!" << std::endl;
+    }
     else
     {
         std::cout << "Выберите режим работы сервера:";
@@ -87,13 +111,16 @@ int main()
             }
         }
 
+        fout    << "\n\n --------------------------------------------------------------------------------------------------------------------------\n" 
+                << getCurDateStr(st) << "\t Запущен сервер. Настройки: \n\t Имя файла с паролями: " << FName << "\n\t Режим работы: " << serverMode << "\n";
 
         /*
         Бесконечный цикл, составляющий логическое ядро сервера
         */
+        std::cout << "Ожидание подключения клиентов..." << std::endl;
         do
         {
-            std::cout << "Ожидание подключения клиентов..." << std::endl;
+            
             Message.resize(100);
             
             /*
@@ -103,7 +130,6 @@ int main()
             АВТОМАТИЧЕСКИ НЕ ИЗМЕНЯЕТ.
             */
 
-            // TODO: вынести это за пределы функции while, чтобы не обращаться каждый раз
             PipeNumber = WaitForMultipleObjects(MAX_PIPE_INST, hEvents, FALSE, INFINITE) - WAIT_OBJECT_0;
          
             if (!file.is_open())
@@ -147,6 +173,8 @@ int main()
                     case PIPE_ERROR:
                         std::cout << "Ошибка при работе с каналом! Производится принудительное отсоединение клиента (код ошибки: "
                             << GetLastError() << ")!" << std::endl;
+                        fout << getCurDateStr(st) << "\tОшибка при работе с каналом! Производится принудительное отсоединение клиента (код ошибки: "
+                            << GetLastError() << ")!" << std::endl;
 
                         /*
                         Если клиент подключен, то проверка того, подключился ли он только что (соответствующее
@@ -157,6 +185,7 @@ int main()
                         if (Pipes[PipeNumber].GetOperState() == PIPE_JUST_CONNECTED)
                         {
                             std::cout << "Testing Message. Just connected" << std::endl;
+                            fout << getCurDateStr(st) << "\tTesting Message. Just connected" << std::endl;
                             ++PipesConnect;
                         }
 
@@ -185,21 +214,29 @@ int main()
                                     hasData = true;
                                     PipeInfo[PipeNumber].ReadVal(Message); // записываем их в вектор
                                     tempData = PipeInfo[PipeNumber].getData(); // получаем элемент вектора
-                                    std::cout << "Testing Message. Write Response" << std::endl;
+
+                                    //std::cout << "Testing Message. Write Response" << std::endl;
+                                    fout << getCurDateStr(st) << "\tTesting Message. Write Response" << std::endl;
+                                    fout << getCurDateStr(st) << "\tAuth attempt (" << tempData[0].login << "/" << tempData[0].password << ")\n";
+
+
                                     resultCheckUser = Pipes[PipeNumber].checkUser(tempData); // сверяем логин и пароль с базой
                                     Pipes[PipeNumber].WriteResponse(resultCheckUser); // отправляем результат проверки
 
                                     Message.clear(); // Очищаем буфер
 
                                     //for debug----------------------------------------
-                                    std::cout << "Testing Message. Client auth status: ";
+                                    //std::cout << "Testing Message. Client auth status: ";
+                                    fout << getCurDateStr(st) << "\tTesting Message. Client auth status: ";
                                     if (resultCheckUser)
                                     {
-                                        std::cout << "TRUE";
+                                        //std::cout << "TRUE";
+                                        fout << "TRUE\n";
                                     }
                                     else
                                     {
-                                        std::cout << "FALSE" << " Attempt №" << attempt_counter[PipeNumber];
+                                        //std::cout << "FALSE" << " Attempt №" << attempt_counter[PipeNumber];
+                                        fout << "FALSE" << " Attempt №" << attempt_counter[PipeNumber] << "\n";
                                         Message.resize(100); // Расширяем размер буфера до исходного
                                     }
                                     std::cout << std::endl;
@@ -210,7 +247,11 @@ int main()
                                     ++attempt_counter[PipeNumber];
 
                                     //latency <<= 5;
-                                    unblock_time[PipeNumber] = (clock() + (100 * attempt_counter[PipeNumber])) * serverMode;
+                                    //fine переводится как штраф
+                                    int fine = (100 * attempt_counter[PipeNumber]) * serverMode;
+                                    //std::cout << "Time to response: " << fine << "мс" << std::endl;
+                                    fout << getCurDateStr(st) << "\tTime to response: " << fine << "мс" << std::endl;
+                                    unblock_time[PipeNumber] = clock() + fine;
                                     break;
                                 }
                                 else if (hasData) // Если считали данные, то продолжаем ожидать следующую порцию данных от клиента 
@@ -247,6 +288,7 @@ int main()
                         }
 
                         std::cout << "Testing Message. Client disconnected.\n";
+                        fout << getCurDateStr(st) << "\tTesting Message. Client disconnected.\n";
                         Pipes[PipeNumber].DisconnectClient();
 
                         if (Pipes[PipeNumber].CanClose() == false)
@@ -271,10 +313,13 @@ int main()
             if (PipesConnect == 0)
             {
                 std::cout << "Все клиенты отключены! Продолжить работу (Y или y - да / любая другая клавиша - нет)? ";
-                for (int i = 0; i < MAX_PIPE_INST; i++)
+                fout << getCurDateStr(st) << "\tВсе клиенты отключены!\n";
+                memset(attempt_counter, 0, sizeof(attempt_counter));
+                // строка выше - аналог этого цикла 
+                /*for (int i = 0; i < MAX_PIPE_INST; i++)
                 {
                     attempt_counter[i] = 0;
-                }
+                }*/
                 
                 std::cin >> answer;
                 if (answer != 'Y' && answer != 'y')
@@ -295,9 +340,23 @@ int main()
 			CloseHandle(hEvents[i]);
 		}
         file.close();
+        fout << getCurDateStr(st) << "\tВыключение сервера.";
+        fout.close();
     }
+    
 
     delete[]FName;
 
     return 0;
+}
+
+std::string getCurDateStr(SYSTEMTIME st)
+{
+    GetLocalTime(&st);
+    std::stringstream ss;
+    //put arbitrary formatted data into the stream
+    ss << st.wYear << "-" << st.wMonth << "-" << st.wDay << " " << st.wHour << ":" << st.wMinute << ":" << st.wSecond << "\t" ;
+    //convert the stream buffer into a string
+    std::string str = ss.str();
+    return str;
 }

@@ -86,6 +86,8 @@ class CPipeServer
     изменяет поле состояния канала
     */
 
+    
+
     void CheckError()
     {
         DWORD Error = GetLastError();
@@ -359,6 +361,12 @@ public:
         if (IsOpen())
         {
             DWORD NBWr;
+
+            if (Message == -13108)
+            {
+                std::cout << "smt wrong!\n";
+
+            }
 
             if (!WriteFile(hPipe, &Message, sizeof(Message), &NBWr, NULL))
             {

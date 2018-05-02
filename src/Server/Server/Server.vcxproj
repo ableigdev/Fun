@@ -26,6 +26,10 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="server_log.txt" />
+    <Text Include="test.txt" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{D8C9FAC7-18B4-4687-8257-86613968AE29}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>

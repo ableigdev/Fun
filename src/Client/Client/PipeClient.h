@@ -3,6 +3,7 @@
 #include <windows.h>
 #include <cstdlib>
 #include <string>
+#include <ctime> 
 
 template <typename T> 
 class CPipeClient
@@ -15,6 +16,7 @@ class CPipeClient
 
 	HANDLE hPipe;
 
+    OVERLAPPED Overl;
 	//------------------------------------------------------------------
 
 public:
@@ -61,7 +63,7 @@ public:
 				0,
 				NULL,
 				OPEN_EXISTING,
-				0,
+				FILE_FLAG_OVERLAPPED,
 				NULL
 			);
 
@@ -127,12 +129,29 @@ public:
 	{
 		if (IsPipeConnected())
 		{
-			DWORD NBytesRead;
-			short int Message;
-            if (ReadFile(hPipe, &Message, sizeof(Message), &NBytesRead, NULL) == TRUE)
+            DWORD NBytesRead;
+            short int Message = -13108; // 
+            HANDLE osReadOperation;
+
+            unsigned int end_time = clock() + 3000;
+
+            while (Message < -2)
+            {
+                ReadFile(hPipe, &Message, sizeof(Message), &NBytesRead, &Overl);
+                if (clock() > end_time)
+                {
+                    return -2;
+                }
+            }
+            
+           
+            if (Message < 2 && Message > -2)
             {
                 return Message;
             }
+
+            
+			
 		}
 		return -1;
 	}
@@ -156,39 +175,71 @@ public:
 	{
 		std::basic_string<T> str(login + "/" + password);
 
+        //HANDLE hevent = CreateEvent(NULL, FALSE, FALSE, NULL);
+
 		if (!(WriteMessage(str)))
 		{
 			std::cout << "\nОшибка записи в именованный канал!\n";
 		}
 
-		switch (ReadResponse())
-		{
-			case 0:
-			{
-				std::cout << "\nНеверный пароль или логин!\n";
-				return 0;
-			}
+        unsigned int end_time = clock() + 3000;
+        int attempts = 0;
+        while (attempts < 3)
+        {
+            int tmp_debug = ReadResponse();
+            switch (tmp_debug)
+            {
+                case 0:
+                {
+                    std::cout << "\nНеверный пароль или логин!\n";
+                    return 0;
+                }
 
-			case 1:
-			{
-				std::cout << "\nАвторизация прошла успешно!\n";
-				hPipe = INVALID_HANDLE_VALUE;
-				return 1;
-			}
+                case 1:
+                {
+                    std::cout << "\nАвторизация прошла успешно!\n";
+                    hPipe = INVALID_HANDLE_VALUE;
+                    return 1;
+                }
 
-			case -1:
-			{
-				std::cout << "\nКоличество попыток подключения исчерпано!" << std::endl;
-						
-				hPipe = INVALID_HANDLE_VALUE;
-				return -1;
-			}
-			default:
-			{
-				std::cout << "\nНеизвестная ошибка!" << std::endl;
-				break;
-			}
-		}
+                case -1:
+                {
+                    std::cout << "\nКоличество попыток подключения исчерпано!" << std::endl;
+
+                    hPipe = INVALID_HANDLE_VALUE;
+                    
+                    return -1;
+                }
+                case -2:
+                { // case of async reading data from server
+                    /*if (clock() > end_time)
+                    {
+                        WriteMessage(str);
+                        end_time = clock() + 3000;
+                        std::cout << "Нет данных от сервера, попытка №" << attempts << std::endl;
+                        attempts++;
+                    }
+                    Sleep(500 * attempts);
+                    break;*/
+                    WriteMessage(str);
+                    attempts++;
+                    Sleep(500 * attempts);
+                    std::cout << "Нет данных от сервера, попытка №" << attempts << std::endl;
+                    break;
+                }
+                default:
+                {
+                    std::cout << "\nНеизвестная ошибка!" << std::endl;
+                    
+                }
+            }
+
+        }
+        std::cout << "\nСервер не отвечает! Соединение разорвано.\n" << std::endl;
+        hPipe = INVALID_HANDLE_VALUE;
+        return -1;
+        //std::cout << "Ошибка соединения с сервером! Соединение разорвано\n";
+        
 	}
 
 	//------------------------------------------------------------------
