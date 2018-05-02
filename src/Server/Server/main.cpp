@@ -160,6 +160,7 @@ int main()
                     int i = 0;
                     auto tempData = PipeInfo[PipeNumber].getData();
 					bool hasData = false; // Флаг для проверки наличия данных в канале (чтобы сервер в случае неправильного логина или пароля гарантировано 3 раза считал данные)
+                    int readTime = clock() + 1000;
 
                     /*
                     Если установлен признак завершения асинхронной операции для указанного экземпляра канала,
@@ -193,7 +194,8 @@ int main()
                         latency = (serverMode) ? 1 : 0;
                         
                         tempData = PipeInfo[PipeNumber].getData();
-
+                        
+                        readTime = clock() + 1000;
 						// Если логин/пароль неправильный и счетчик поптыок меньше макс. кол-ву попыток, а также клиент не отключился раньше времени
                         while (!resultCheckUser && (attempt_counter[PipeNumber] * serverMode) < MAX_COUNTER_ATTEMPT && Pipes[PipeNumber].GetState() != PIPE_LOST_CONNECT)
                         {
@@ -203,9 +205,12 @@ int main()
                             //clock() - функция получения текущего времени
                             if (clock() >= unblock_time[PipeNumber])
                             {
-
+                                
+                                
                                 if (Pipes[PipeNumber].ReadMessage(Message)) // если данные есть в канале
                                 {
+                                    readTime = clock() + 1000;
+
                                     if (Message.size() == 1 && (Message == "C" || Message == "c"))
                                     {
                                         Pipes[PipeNumber].setState(PIPE_LOST_CONNECT);
@@ -256,6 +261,12 @@ int main()
                                 }
                                 else if (hasData) // Если считали данные, то продолжаем ожидать следующую порцию данных от клиента 
                                 {
+                                    if (clock() > readTime)
+                                    {
+                                        Pipes[PipeNumber].WriteResponse(resultCheckUser);
+                                        std::cout << "\nКлиент не отвечает, повторный запрос.\n";
+                                        fout << getCurDateStr(st) << "\tКлиент не отвечает, повторный запрос.\n";
+                                    }
                                     ++attempt_counter[PipeNumber];
                                     hasData = false;
                                 }

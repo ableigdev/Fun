@@ -2,6 +2,7 @@
 #include <vector>
 #include <iostream>
 #include <Windows.h>
+#include <ctime>
 
 BruteForce::BruteForce()
 	: m_PasswordLength(0)
@@ -44,11 +45,11 @@ std::string BruteForce::getAlphabet(int value)
 		}
 		case 2:
 		{
-			return " qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890";
+			return "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890";
 		}
 		case 3:
 		{
-			return " qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"\
+			return "  qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"\
 				"йцукенгшщзхъфывапролджэячсмитьбюёЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮЁ";
 		}
 		default:
@@ -60,6 +61,7 @@ std::string BruteForce::getAlphabet(int value)
 
 void BruteForce::brute(CPipeClient<char>& PC)
 {
+
 	std::vector<int> indexer{};
 	indexer.resize(m_PasswordLength);
 
@@ -67,6 +69,11 @@ void BruteForce::brute(CPipeClient<char>& PC)
 	currentPassword.resize(m_PasswordLength);
 
 	int alphabetSize = m_Alphabet.size();
+    m_Alphabet[0] = '\0';
+    //double pos = pow(alphabetSize, m_PasswordLength);
+    //std::cout << "Кол-во возможных паролей = " << pos << std::endl;
+
+    unsigned int start_time = clock();
 
 	while (PC.IsPipeConnected())
 	{
@@ -87,27 +94,13 @@ void BruteForce::brute(CPipeClient<char>& PC)
 			currentPassword[i] = m_Alphabet[indexer[(m_PasswordLength - 1) - i]];
 		}
 
-        /*for (int i = 0; i < m_PasswordLength; ++i)
-        {
-            if (i != 0)
-            {
-                if (indexer[i] == alphabetSize)
-                {
-                    indexer[i] = 0;
-                    ++indexer[i - 1];
-                }
-            }
-        }
-        for (int i = 0; i < m_PasswordLength; ++i)
-        {
-            currentPassword[i] = m_Alphabet[indexer[i]];
-        }*/
-
 		//Sleep(100);
-        //std::cout << currentPassword << std::endl;
+        std::cout << currentPassword << std::endl;
 
-		if (PC.authorization(m_Login, currentPassword) == 1)
+		if (PC.authorization(m_Login, currentPassword, false) == 1)
 		{
+            std::cout << "Пароль найден: " << currentPassword << std::endl;
+            std::cout << "Затрачено времени: " << clock() - start_time << "ms";
 			break;
 		}
 

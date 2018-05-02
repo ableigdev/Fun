@@ -152,7 +152,7 @@ public:
     */
 
 
-    int authorization(const std::basic_string<T>& login, const std::basic_string<T>& password)
+    int authorization(const std::basic_string<T>& login, const std::basic_string<T>& password, bool outputFlag = true)
     {
         std::basic_string<T> str(login + "/" + password);
 
@@ -165,7 +165,8 @@ public:
         {
         case 0:
         {
-            std::cout << "\nНеверный пароль или логин!\n";
+            if(outputFlag)
+                std::cout << "\nНеверный пароль или логин!\n";
             return 0;
         }
 
