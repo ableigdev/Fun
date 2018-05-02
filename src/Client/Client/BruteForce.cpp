@@ -40,15 +40,15 @@ std::string BruteForce::getAlphabet(int value)
 	{
 		case 1:
 		{
-			return "qwertyuiopasdfghjklzxcvbnm";
+			return " qwertyuiopasdfghjklzxcvbnm";
 		}
 		case 2:
 		{
-			return "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890";
+			return " qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890";
 		}
 		case 3:
 		{
-			return "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"\
+			return " qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"\
 				"éöóêåíãøùçõúôûâàïğîëäæıÿ÷ñìèòüáş¸ÉÖÓÊÅÍÃØÙÇÕÚÔÛÂÀÏĞÎËÄÆİß×ÑÌÈÒÜÁŞ¨";
 		}
 		default:
@@ -70,7 +70,7 @@ void BruteForce::brute(CPipeClient<char>& PC)
 
 	while (PC.IsPipeConnected())
 	{
-		for (int i = m_PasswordLength - 1; i >= 0; --i)
+    	for (int i = m_PasswordLength - 1; i >= 0; --i)
 		{
 			if (i != 0)
 			{
@@ -82,10 +82,26 @@ void BruteForce::brute(CPipeClient<char>& PC)
 			}
 		}
 
-		for (int i = 0; i < m_PasswordLength; ++i)
+		for (int i = m_PasswordLength - 1; i >= 0; --i)
 		{
-			currentPassword[i] = m_Alphabet[indexer[i]];
+			currentPassword[i] = m_Alphabet[indexer[(m_PasswordLength - 1) - i]];
 		}
+
+        /*for (int i = 0; i < m_PasswordLength; ++i)
+        {
+            if (i != 0)
+            {
+                if (indexer[i] == alphabetSize)
+                {
+                    indexer[i] = 0;
+                    ++indexer[i - 1];
+                }
+            }
+        }
+        for (int i = 0; i < m_PasswordLength; ++i)
+        {
+            currentPassword[i] = m_Alphabet[indexer[i]];
+        }*/
 
 		//Sleep(100);
         //std::cout << currentPassword << std::endl;

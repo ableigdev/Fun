@@ -195,7 +195,7 @@ int main()
                         tempData = PipeInfo[PipeNumber].getData();
 
 						// Если логин/пароль неправильный и счетчик поптыок меньше макс. кол-ву попыток, а также клиент не отключился раньше времени
-                        while (!resultCheckUser && attempt_counter[PipeNumber] < MAX_COUNTER_ATTEMPT && Pipes[PipeNumber].GetState() != PIPE_LOST_CONNECT)
+                        while (!resultCheckUser && (attempt_counter[PipeNumber] * serverMode) < MAX_COUNTER_ATTEMPT && Pipes[PipeNumber].GetState() != PIPE_LOST_CONNECT)
                         {
 
                             //Sleep(latency);
@@ -239,7 +239,7 @@ int main()
                                         fout << "FALSE" << " Attempt №" << attempt_counter[PipeNumber] << "\n";
                                         Message.resize(100); // Расширяем размер буфера до исходного
                                     }
-                                    std::cout << std::endl;
+                                    //std::cout << std::endl;
                                     //--------------------------------------------------
 
                                     PipeInfo[PipeNumber].ClearData();
@@ -266,7 +266,7 @@ int main()
                             }
                         }
 
-						if (attempt_counter[PipeNumber] >= MAX_COUNTER_ATTEMPT)
+						if ((attempt_counter[PipeNumber] * serverMode) >= MAX_COUNTER_ATTEMPT)
 						{
 							Pipes[PipeNumber].WriteResponse(EXHAUSTED_ATTEMPTS); 
                             Pipes[PipeNumber].setState(PIPE_LOST_CONNECT);
