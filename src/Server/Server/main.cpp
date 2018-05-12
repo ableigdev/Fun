@@ -45,7 +45,7 @@ int main()
 
     PerPipeStruct<char> PipeInfo[MAX_PIPE_INST];
     CPipeServer<char> Pipes[MAX_PIPE_INST];
-    char *FName = new char[MAX_PATH];
+    TCHAR *FName = new TCHAR[MAX_PATH];
     char answer;
     std::ifstream file;
     DWORD PipeNumber, NBytesRead;
@@ -60,7 +60,25 @@ int main()
 
     SetConsoleOutputCP(1251);
     std::cout << "Введите имя файла с логинами и паролями: ";
-    std::cin >> FName;
+    
+	OPENFILENAME ofn;
+	ZeroMemory(&ofn, sizeof(OPENFILENAME));
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.hwndOwner = nullptr;
+	ofn.lpstrFilter = TEXT("All\0*\0\0");
+	ofn.nFilterIndex = 1;
+	ofn.lpstrFile = FName;
+	ofn.lpstrFile[0] = '\0';
+	ofn.nMaxFile = sizeof(CHAR)*MAX_PATH;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+	while (!GetOpenFileName(&ofn))
+	{
+		std::cout << "\nФайл с паролями не выбран!" << std::endl;
+		std::cout << "Выберите файл." << std::endl;
+	}
+
+	std::wcout << FName << std::endl;
 
     file.open(FName);
 
@@ -74,7 +92,7 @@ int main()
     }
     else
     {
-        std::cout << "Выберите режим работы сервера:";
+        std::cout << "\nВыберите режим работы сервера:";
         std::cout << "\n0 - Обычный;\n1 - Противодействие взлому.\n";
         std::cin.clear();
         std::cin >> serverMode;
@@ -118,6 +136,8 @@ int main()
         Бесконечный цикл, составляющий логическое ядро сервера
         */
         std::cout << "Ожидание подключения клиентов..." << std::endl;
+		
+		int counter = 0;
         do
         {
             
@@ -129,19 +149,24 @@ int main()
             При этом функция WaitForMultipleObjects состояние события с ручным сбросом
             АВТОМАТИЧЕСКИ НЕ ИЗМЕНЯЕТ.
             */
-
-            PipeNumber = WaitForMultipleObjects(MAX_PIPE_INST, hEvents, FALSE, INFINITE) - WAIT_OBJECT_0;
-         
-            if (!file.is_open())
-            {
-                file.open(FName);
-            }
-
-            Pipes[PipeNumber].readFromDB(file);
-            file.close();
+			
+			PipeNumber = WaitForSingleObject(hEvents[counter], 15);
 
             if (PipeNumber < MAX_PIPE_INST)
             {
+				if (PipeNumber != counter)
+				{
+					PipeNumber = counter;
+				}
+
+				if (!file.is_open())
+				{
+					file.open(FName);
+				}
+
+				Pipes[PipeNumber].readFromDB(file);
+				file.close();
+
                 /*
                 Если получен правильный номер, то проверяется, была ли запущена асинхронная операция, и,
                 если она была запущена, то проверяется состояние завершенной асинхронной операции методом
@@ -199,9 +224,6 @@ int main()
 						// Если логин/пароль неправильный и счетчик поптыок меньше макс. кол-ву попыток, а также клиент не отключился раньше времени
                         while (!resultCheckUser && (attempt_counter[PipeNumber] * serverMode) < MAX_COUNTER_ATTEMPT && Pipes[PipeNumber].GetState() != PIPE_LOST_CONNECT)
                         {
-
-                            //Sleep(latency);
-
                             //clock() - функция получения текущего времени
                             if (clock() >= unblock_time[PipeNumber])
                             {
@@ -220,7 +242,6 @@ int main()
                                     PipeInfo[PipeNumber].ReadVal(Message); // записываем их в вектор
                                     tempData = PipeInfo[PipeNumber].getData(); // получаем элемент вектора
 
-                                    //std::cout << "Testing Message. Write Response" << std::endl;
                                     fout << getCurDateStr(st) << "\tTesting Message. Write Response" << std::endl;
                                     fout << getCurDateStr(st) << "\tAuth attempt (" << tempData[0].login << "/" << tempData[0].password << ")\n";
 
@@ -231,7 +252,6 @@ int main()
                                     Message.clear(); // Очищаем буфер
 
                                     //for debug----------------------------------------
-                                    //std::cout << "Testing Message. Client auth status: ";
                                     fout << getCurDateStr(st) << "\tTesting Message. Client auth status: ";
                                     if (resultCheckUser)
                                     {
@@ -244,7 +264,6 @@ int main()
                                         fout << "FALSE" << " Attempt №" << attempt_counter[PipeNumber] << "\n";
                                         Message.resize(100); // Расширяем размер буфера до исходного
                                     }
-                                    //std::cout << std::endl;
                                     //--------------------------------------------------
 
                                     PipeInfo[PipeNumber].ClearData();
@@ -254,7 +273,6 @@ int main()
                                     //latency <<= 5;
                                     //fine переводится как штраф
                                     int fine = (100 * attempt_counter[PipeNumber]) * serverMode;
-                                    //std::cout << "Time to response: " << fine << "мс" << std::endl;
                                     fout << getCurDateStr(st) << "\tTime to response: " << fine << "мс" << std::endl;
                                     unblock_time[PipeNumber] = clock() + fine;
                                     break;
@@ -315,31 +333,38 @@ int main()
 
                     }
                 }
+
+				/*
+				Если нет подключенных клиентов, то запрос о необходимости продолжения работы и выполнение
+				соответствующих действий
+				*/
+				if (PipesConnect == 0)
+				{
+					std::cout << "Все клиенты отключены! Продолжить работу (Y или y - да / любая другая клавиша - нет)? ";
+					fout << getCurDateStr(st) << "\tВсе клиенты отключены!\n";
+					memset(attempt_counter, 0, sizeof(attempt_counter));
+
+					std::cin >> answer;
+					if (answer != 'Y' && answer != 'y')
+					{
+						break;
+					}
+					vec.clear();
+					Message.clear(); // makes size of string == 0
+				}
             }
 
-            /*
-            Если нет подключенных клиентов, то запрос о необходимости продолжения работы и выполнение
-            соответствующих действий
-            */
-            if (PipesConnect == 0)
-            {
-                std::cout << "Все клиенты отключены! Продолжить работу (Y или y - да / любая другая клавиша - нет)? ";
-                fout << getCurDateStr(st) << "\tВсе клиенты отключены!\n";
-                memset(attempt_counter, 0, sizeof(attempt_counter));
-                // строка выше - аналог этого цикла 
-                /*for (int i = 0; i < MAX_PIPE_INST; i++)
-                {
-                    attempt_counter[i] = 0;
-                }*/
-                
-                std::cin >> answer;
-                if (answer != 'Y' && answer != 'y')
-                {
-                    break;
-                }
-                vec.clear();
-                Message.clear(); // makes size of string == 0
-            }
+            
+
+			if (counter < MAX_PIPE_INST - 1)
+			{
+				++counter;
+			}
+			else
+			{
+				counter = 0;
+			}
+
         } while (1);
 
         /*

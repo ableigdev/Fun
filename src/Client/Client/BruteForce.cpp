@@ -70,8 +70,6 @@ void BruteForce::brute(CPipeClient<char>& PC)
 
 	int alphabetSize = m_Alphabet.size();
     m_Alphabet[0] = '\0';
-    //double pos = pow(alphabetSize, m_PasswordLength);
-    //std::cout << "Кол-во возможных паролей = " << pos << std::endl;
 
     unsigned int start_time = clock();
 
@@ -94,13 +92,10 @@ void BruteForce::brute(CPipeClient<char>& PC)
 			currentPassword[i] = m_Alphabet[indexer[(m_PasswordLength - 1) - i]];
 		}
 
-		//Sleep(100);
-        std::cout << currentPassword << std::endl;
-
 		if (PC.authorization(m_Login, currentPassword, false) == 1)
 		{
             std::cout << "Пароль найден: " << currentPassword << std::endl;
-            std::cout << "Затрачено времени: " << clock() - start_time << "ms";
+			std::cout << "Затрачено времени: " << clock() - start_time << "ms" << std::endl;
 			break;
 		}
 

@@ -113,6 +113,8 @@ int main()
 			if (PC.ConnectPipe(PipeName))
 			{
 				PC.InitMessageMode();
+
+				std::cout << "\n<---Взлом стартовал--->" << std::endl;
 				bruteForce.brute(PC);
 			}
 			
