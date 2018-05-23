@@ -172,12 +172,11 @@ public:
 
             if (fOverlapped)
             {
-                int time = clock() + 500;
+                int time = clock() + 100;
                 while (clock() < time)
                 {
                     if (GetOverlappedResult(hPipe, &osReadOperation, &NBytesRead, FALSE))
                     {
-                        //ReadHasCompleted(NumberOfBytesTransferred);
                         if (Message < -13)
                         {
                             return -2;
@@ -210,24 +209,6 @@ public:
             }
                 
             //--------------------------------------------------------------------------
-            
-            //DWORD avail;
-            //bool bSuccess = FALSE;
-            //bool tSuccess = FALSE;
-
-            //tSuccess = PeekNamedPipe(hPipe, NULL, 0, NULL, &avail, NULL);
-
-            //if (tSuccess && avail > 0)
-            //{
-
-            //if (ReadFile(hPipe, &Message, sizeof(Message), &NBytesRead, NULL) == TRUE)
-            //{
-              //  return Message;
-            //}
-            //}
-            //std::cout << tSuccess << "\t" << avail << "\t\n";
-            
-
         }
         return -1;
     }
@@ -283,11 +264,11 @@ public:
         }
         case -2:
             // Если данные були утеряны в процессе передачи данных
-            rec_deep++;
-            Sleep(5);
+            ++rec_deep;
+            //Sleep(5);
             //std::cout << "rec_deep = " << rec_deep << std::endl;
-            res = (rec_deep < 5 ? authorization(login, password, false) : -1);
-            rec_deep--;
+            res = (rec_deep < 3 ? authorization(login, password, false) : -1);
+            --rec_deep;
             return res;
         case -3:
             std::cout << "\nпустые данные от сервера! ( " << choose << " )" << std::endl;

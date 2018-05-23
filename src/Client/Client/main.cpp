@@ -53,86 +53,86 @@ int main()
 		int mode;
 		std::cin >> mode;
 
-        if (PC.ConnectPipe(PipeName))
+        switch (mode)
         {
-            PC.InitMessageMode();
-
-            switch (mode)
+        case 1:
+            //передаем пустые логин и пароль
+            if (PC.ConnectPipe(PipeName))
             {
-            case 1:
-                //передаем пустые логин и пароль
-                if (PC.ConnectPipe(PipeName))
+                PC.InitMessageMode();
+                do
                 {
-                    PC.InitMessageMode();
-                    do
+                    std::cout << "\nВведите логин: ";
+                    std::cin >> login;
+
+                    std::cout << "Введите пароль: ";
+                    std::cin >> password;
+
+                    if (PC.authorization(login, password) == 0)
                     {
-                        std::cout << "\nВведите логин: ";
-                        std::cin >> login;
-
-                        std::cout << "Введите пароль: ";
-                        std::cin >> password;
-
-                        if (PC.authorization(login, password) == 0)
+                        char answer;
+                        std::cout << "Повторить ввод? (Y/N): ";
+                        std::cin >> answer;
+                        if (answer == 'N' || answer == 'n')
                         {
-                            char answer;
-                            std::cout << "Повторить ввод? (Y/N): ";
-                            std::cin >> answer;
-                            if (answer == 'N' || answer == 'n')
-                            {
-                                PC.WriteMessage("C");
-                                break;
-                            }
+                            PC.WriteMessage("C");
+                            break;
                         }
-                    } while (PC.IsPipeConnected());
-                }
-                else
-                {
-                    std::cout << "\n?????? ?????????? ? ???????? (??? ??????: " << GetLastError() << ")!\n";
-                }
-                break;
-
-            case 2:
-                std::cout << "\nТип алфавита пароля: \n"
-                    << "1) Маленькие латинские буквы - 25 символов (по умолчанию)\n"
-                    << "2) Маленькие и большие латинские буквы + цифры - 62 символа\n"
-                    << "3) Маленькие и большие латинские цифры + цифры + маленькие и большие русские буквы - 128 символов" << std::endl;
-
-                std::cin >> alphType;
-                if (alphType > 3 || alphType < 1)
-                {
-                    std::cout << "\nВыбран тип по умолчанию. \n";
-                    alphType = 1;
-                }
-
-                alphabet = bruteForce.getAlphabet(alphType);
-
-                std::cout << "Введите максимально допустимую длину пароля: ";
-                std::cin >> maxPasswordLength;
-
-                std::cout << "Введите логин: ";
-                std::cin >> login;
-
-                bruteForce.setLogin(login);
-                bruteForce.setAlphabet(alphabet);
-                bruteForce.setPasswordLength(maxPasswordLength);
+                    }
+                } while (PC.IsPipeConnected());
+            }
+            else
+            {
+                errCodeOut(GetLastError());
+                //std::cout << "\nОшибка соединения с сервером (код ошибки: " << GetLastError() << ")!\n";
+            }
+            break;
 
 
+        case 2:
+            std::cout << "\nТип алфавита пароля: \n"
+                << "1) Маленькие латинские буквы - 25 символов (по умолчанию)\n"
+                << "2) Маленькие и большие латинские буквы + цифры - 62 символа\n"
+                << "3) Маленькие и большие латинские цифры + цифры + маленькие и большие русские буквы - 128 символов" << std::endl;
+
+            std::cin >> alphType;
+            if (alphType > 3 || alphType < 1)
+            {
+                std::cout << "\nВыбран тип по умолчанию. \n";
+                alphType = 1;
+            }
+
+            alphabet = bruteForce.getAlphabet(alphType);
+
+            std::cout << "Введите максимально допустимую длину пароля: ";
+            std::cin >> maxPasswordLength;
+
+            std::cout << "Введите логин: ";
+            std::cin >> login;
+
+            bruteForce.setLogin(login);
+            bruteForce.setAlphabet(alphabet);
+            bruteForce.setPasswordLength(maxPasswordLength);
+
+
+            if (PC.ConnectPipe(PipeName))
+            {
                 PC.InitMessageMode();
 
                 std::cout << "\n<---Взлом стартовал--->" << std::endl;
                 bruteForce.brute(PC);
-
-
-                break;
-
-            case 3:
-                menuExit = true;
-                break;
-
-            default:
-                std::cout << "\nОшибка ввода, введите еще раз.\n";
-                break;
             }
+
+
+            break;
+
+        case 3:
+            menuExit = true;
+            break;
+
+        default:
+            std::cout << "\nОшибка ввода, введите еще раз.\n";
+            break;
         }
         std::cout << "\nРабота с сервером завершена.\n";
 
@@ -156,9 +156,6 @@ void errCodeOut(int switch_on)
     case 231:
         std::cout << switch_on << " (ERROR_PIPE_BUSY)";
         break;
-
-
-
     default:
         std::cout << switch_on;
         break;

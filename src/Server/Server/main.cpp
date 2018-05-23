@@ -4,6 +4,7 @@
 #include <sstream>
 
 
+
 #include "PipeServer.h"
 #include "PerPipeStruct.h"
 
@@ -13,6 +14,8 @@
 #define PIPE_NAME		L"\\\\.\\pipe\\pipe_example"
 #define MAX_COUNTER_ATTEMPT 20000
 #define EXHAUSTED_ATTEMPTS -1
+
+#define DEBUG 0
 
 std::string getCurDateStr(SYSTEMTIME st);
 
@@ -129,6 +132,20 @@ int main()
             }
         }
 
+        for (int i = 0; i < MAX_PIPE_INST; i++)
+        {
+            if (!file.is_open())
+            {
+                file.open(FName);
+            }
+
+            // считывание паролей 
+            Pipes[i].readFromDB(file);
+            file.close();
+        }
+        
+
+
         fout    << "\n\n --------------------------------------------------------------------------------------------------------------------------\n" 
                 << getCurDateStr(st) << "\t Запущен сервер. Настройки: \n\t Имя файла с паролями: " << FName << "\n\t Режим работы: " << serverMode << "\n";
 
@@ -139,6 +156,7 @@ int main()
 		
 		int counter = 0; // счетчик активного канала
         bool oneChannelAlive; // флаг проверки активности хотя-бы одного канала
+
         do
         {
             oneChannelAlive = false; // обнуление флага
@@ -174,7 +192,9 @@ int main()
                 //std::cout << "ActivePipe: " << PipeNumber;
                 counter = PipeNumber;
             }
-            std::cout << "ActivePipe: " << PipeNumber << std::endl;
+
+            if(DEBUG)
+                std::cout << "ActivePipe: " << PipeNumber << std::endl;
 
             if (PipeNumber < MAX_PIPE_INST) // проверка на выход из допустимых пределов кол-ва каналов
             {
@@ -185,14 +205,14 @@ int main()
 					PipeNumber = counter;
 				}*/
 
-				if (!file.is_open())
-				{
-					file.open(FName);
-				}
+				//if (!file.is_open())
+				//{
+				//	file.open(FName);
+				//}
 
-                // считывание паролей 
-				Pipes[PipeNumber].readFromDB(file);
-				file.close();
+    //            // считывание паролей 
+				//Pipes[PipeNumber].readFromDB(file);
+				//file.close();
 
                 /*
                 Если получен правильный номер, то проверяется, была ли запущена асинхронная операция, и,
@@ -270,7 +290,7 @@ int main()
                                     tempData = PipeInfo[PipeNumber].getData(); // получаем элемент вектора
 
                                     fout << getCurDateStr(st) << "\tTesting Message. Write Response" << std::endl;
-                                    fout << getCurDateStr(st) << "\tAuth attempt (" << tempData[0].login << "/" << tempData[0].password << ")\n";
+                                    fout << getCurDateStr(st) << "\tAuth attempt (channel "<< PipeNumber <<") (" << tempData[0].login << "/" << tempData[0].password << ")\n";
 
 
                                     resultCheckUser = Pipes[PipeNumber].checkUser(tempData); // сверяем логин и пароль с базой
@@ -389,6 +409,7 @@ int main()
 			{
 				counter = 0;
 			}
+
         } while (1);
 
         /*

@@ -4,7 +4,7 @@
 #include <Windows.h>
 #include <ctime>
 
-#define DEBUG_MODE 1
+#define DEBUG 0
 
 BruteForce::BruteForce()
 	: m_PasswordLength(0)
@@ -65,7 +65,9 @@ std::string BruteForce::getAlphabet(int value)
 void BruteForce::brute(CPipeClient<char>& PC)
 {
 
-    if (DEBUG_MODE)
+    std::cout << "Колличество вариаций: " << pow(m_Alphabet.length(), m_PasswordLength) << std::endl;
+
+    if (DEBUG)
     {
         std::cout << "< DEBUG_MODE >" << std::endl;
     }
@@ -100,7 +102,7 @@ void BruteForce::brute(CPipeClient<char>& PC)
 			currentPassword[i] = m_Alphabet[indexer[(m_PasswordLength - 1) - i]];
 		}
 
-        if (DEBUG_MODE)
+        if (DEBUG)
         {
             std::cout << currentPassword << std::endl;
         }
