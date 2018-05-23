@@ -73,22 +73,6 @@ public:
 
             if (!IsPipeConnected())
             {
-                //не вижу смысла в следующем коде, так как в любом случае возвращаем ошибку. \
-                    Зачем дожидатсья освобождения сервера, чтобы выдать ошибку?
-                /*
-                if (GetLastError() == ERROR_PIPE_BUSY)
-                {
-                    
-                    //Если подключение не произошло по причине занятости сервера, то выполнение ожидания его
-                    //освобождения (в случае неудачности ожидания   выход) и переход на повторное подключение
-                    
-
-                    if (!WaitNamedPipe(wPipeName.c_str(), WaitInfinite ? NMPWAIT_WAIT_FOREVER : NMPWAIT_USE_DEFAULT_WAIT))
-                        return false;
-                }
-                else
-                    // Другая ошибка при подключении, следовательно, оно не удалось
-                    return false;*/
                 return false;
             }
             else
@@ -139,14 +123,7 @@ public:
         {
             DWORD NBytesRead;
             short int Message;
-            
-            /*if (ReadFile(hPipe, &Message, sizeof(Message), &NBytesRead, NULL) == TRUE)
-            {
-                std::cout << NBytesRead << "\t" << Message << "\t\n";
-                return Message;
-            }*/
 
-            //--------------------------------------------------------------------------
             bool fOverlapped = FALSE;
 
 
@@ -166,7 +143,6 @@ public:
             {
                 // Operation has completed immediately.
                 fOverlapped = FALSE;
-                std::cout << "immediately message " << Message << std::endl;
                 return Message;
             }
 
@@ -191,24 +167,18 @@ public:
                         }
                         else
                         {
-                            // Operation has completed, but it failed.
                             return -1;
                         }
 
                     }
                 }
                 return -2;
-                // Wait for the operation to complete before continuing.
-                // You could do some background work if you wanted to.
-                
             }
             else
             {
                 std::cout << NBytesRead << "\t" << Message << "\t\n";
                 return Message;
             }
-                
-            //--------------------------------------------------------------------------
         }
         return -1;
     }
@@ -226,8 +196,6 @@ public:
     /*
     Доступный пользователю метод, с помощью которого осуществляется подключение к серверу и передача
     */
-
-
     int authorization(const std::basic_string<T>& login, const std::basic_string<T>& password, bool outputFlag = true)
     {
         std::basic_string<T> str(login + "/" + password);
@@ -266,13 +234,7 @@ public:
                 }
 
                 case -2:
-                    // Если данные були утеряны в процессе передачи данных
-                    //++rec_deep;
-                    //Sleep(5);
-                    //std::cout << "rec_deep = " << rec_deep << std::endl;
-                    //res = (rec_deep < 5 ? authorization(login, password, false) : -1);
-                    //--rec_deep;
-                    //return res;
+                    // i know, here must be some code, but... it works faster without it :D
                     break;
                 case -3:
                     std::cout << "\nпустые данные от сервера! ( " << choose << " )" << std::endl;
