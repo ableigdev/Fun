@@ -121,8 +121,8 @@ int main()
 
                 std::cout << "\n<---Взлом стартовал--->" << std::endl;
                 bruteForce.brute(PC);
+                menuExit = true;
             }
-
 
             break;
 
@@ -140,7 +140,7 @@ int main()
 
 	delete[]ServerName;
 	delete[]PipeName;
-
+    system("pause");
 	return 0;
 }
 

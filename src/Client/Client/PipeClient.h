@@ -231,54 +231,60 @@ public:
     int authorization(const std::basic_string<T>& login, const std::basic_string<T>& password, bool outputFlag = true)
     {
         std::basic_string<T> str(login + "/" + password);
+        int choose = -2;
+        while (choose == -2)
+        {
+            if (!(WriteMessage(str)))
+            {
+                std::cout << "\nОшибка записи в именованный канал!\n";
+            }
+            int res = 0;
 
-        if (!(WriteMessage(str)))
-        {
-            std::cout << "\nОшибка записи в именованный канал!\n";
-        }
-        int res = 0;
+            choose = ReadResponse();
+            switch (choose)
+            {
+                case 0:
+                {
+                    if (outputFlag)
+                        std::cout << "\nНеверный пароль или логин!\n";
+                    return 0;
+                }
 
-        int choose = ReadResponse();
-        switch (choose)
-        {
-        case 0:
-        {
-            if(outputFlag)
-                std::cout << "\nНеверный пароль или логин!\n";
-            return 0;
-        }
+                case 1:
+                {
+                    std::cout << "\nАвторизация прошла успешно!\n";
+                    hPipe = INVALID_HANDLE_VALUE;
+                    return 1;
+                }
 
-        case 1:
-        {
-            std::cout << "\nАвторизация прошла успешно!\n";
-            hPipe = INVALID_HANDLE_VALUE;
-            return 1;
-        }
+                case -1:
+                {
+                    std::cout << "\nКоличество попыток подключения исчерпано!" << std::endl;
 
-        case -1:
-        {
-            std::cout << "\nКоличество попыток подключения исчерпано!" << std::endl;
+                    hPipe = INVALID_HANDLE_VALUE;
+                    return -1;
+                }
 
-            hPipe = INVALID_HANDLE_VALUE;
-            return -1;
+                case -2:
+                    // Если данные були утеряны в процессе передачи данных
+                    //++rec_deep;
+                    //Sleep(5);
+                    //std::cout << "rec_deep = " << rec_deep << std::endl;
+                    //res = (rec_deep < 5 ? authorization(login, password, false) : -1);
+                    //--rec_deep;
+                    //return res;
+                    break;
+                case -3:
+                    std::cout << "\nпустые данные от сервера! ( " << choose << " )" << std::endl;
+                    break;
+                default:
+                {
+                    std::cout << "\nНеизвестная ошибка! ( " << choose << " )" << std::endl;
+                    break;
+                }
+            }
         }
-        case -2:
-            // Если данные були утеряны в процессе передачи данных
-            ++rec_deep;
-            //Sleep(5);
-            //std::cout << "rec_deep = " << rec_deep << std::endl;
-            res = (rec_deep < 3 ? authorization(login, password, false) : -1);
-            --rec_deep;
-            return res;
-        case -3:
-            std::cout << "\nпустые данные от сервера! ( " << choose << " )" << std::endl;
-            break;
-        default:
-        {
-            std::cout << "\nНеизвестная ошибка! ( " << choose << " )" << std::endl;
-            break;
-        }
-        }
+        
     }
 
     //------------------------------------------------------------------

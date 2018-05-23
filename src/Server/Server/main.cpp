@@ -184,6 +184,7 @@ int main()
             if (!oneChannelAlive) // если все каналы молчат - ждем хоть кого-то
             {
                 //PipeNumber = WaitForSingleObject(hEvents[counter], 15);
+                //std::cout << "0";
                 PipeNumber = WaitForMultipleObjects(MAX_PIPE_INST, hEvents, false, 1500) - WAIT_OBJECT_0;
                 if (PipeNumber == 258)
                 {
@@ -257,8 +258,8 @@ int main()
                     case PIPE_CONNECTED:
                         if (Pipes[PipeNumber].GetOperState() == PIPE_JUST_CONNECTED)
                         {
-                            std::cout << "Testing Message. Just connected" << std::endl;
-                            fout << getCurDateStr(st) << "\tTesting Message. Just connected" << std::endl;
+                            std::cout << "Testing Message. Just connected (channel " << PipeNumber << ")" << std::endl;
+                            fout << getCurDateStr(st) << "\tTesting Message. Just connected (channel " << PipeNumber << ")" << std::endl;
                             ++PipesConnect;
                         }
 
@@ -299,7 +300,7 @@ int main()
                                     Message.clear(); // Очищаем буфер
 
                                     //for debug----------------------------------------
-                                    fout << getCurDateStr(st) << "\tTesting Message. Client auth status: ";
+                                    fout << getCurDateStr(st) << "\tTesting Message. Client auth status (channel " << PipeNumber << "): ";
                                     if (resultCheckUser)
                                     {
                                         //std::cout << "TRUE";
@@ -363,7 +364,7 @@ int main()
                             --PipesConnect;
                         }
 
-                        std::cout << "Testing Message. Client disconnected.\n";
+                        std::cout << "Testing Message. Client disconnected (channel " << PipeNumber << ").\n";
                         fout << getCurDateStr(st) << "\tTesting Message. Client disconnected.\n";
                         Pipes[PipeNumber].DisconnectClient();
 
@@ -436,7 +437,7 @@ std::string getCurDateStr(SYSTEMTIME st)
     GetLocalTime(&st);
     std::stringstream ss;
     //put arbitrary formatted data into the stream
-    ss << st.wYear << "-" << st.wMonth << "-" << st.wDay << " " << st.wHour << ":" << st.wMinute << ":" << st.wSecond << "\t" ;
+    ss << st.wYear << "-" << st.wMonth << "-" << st.wDay << " " << st.wHour << ":" << st.wMinute << ":" << st.wSecond << "\t" << st.wMilliseconds << "\t" ;
     //convert the stream buffer into a string
     std::string str = ss.str();
     return str;

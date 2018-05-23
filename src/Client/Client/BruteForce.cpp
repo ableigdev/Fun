@@ -44,15 +44,15 @@ std::string BruteForce::getAlphabet(int value)
 		case 1:
 		{
 			//return " qwertyuiopasdfghjklzxcvbnm";
-            return " paswertyuiodfghjklzxcvbnm";
+            return " sapwertyuiodfghjklzxcvbnm";
 		}
 		case 2:
 		{
-			return "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890";
+			return " qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890";
 		}
 		case 3:
 		{
-			return "  qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"\
+			return " qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"\
 				"יצףךוםדרשחץתפûגאןנמכהז‎ÿקסלטעüב‏¸ÉÖÓÊÅÍÃØÙÇÕÚÔÛÂÀÏÐÎËÄÆÝ‗×ÑÌÈÒÜÁÞ¨";
 		}
 		default:
@@ -65,7 +65,7 @@ std::string BruteForce::getAlphabet(int value)
 void BruteForce::brute(CPipeClient<char>& PC)
 {
 
-    std::cout << "Êמככטקוסעגמ גאנטאצטי: " << pow(m_Alphabet.length(), m_PasswordLength) << std::endl;
+    std::cout << "Êמכ-גמ גאנטאצטי: " << pow(m_Alphabet.length(), m_PasswordLength) << std::endl;
 
     if (DEBUG)
     {
@@ -106,6 +106,7 @@ void BruteForce::brute(CPipeClient<char>& PC)
         {
             std::cout << currentPassword << std::endl;
         }
+        std::cout << currentPassword << "\r";
 
 		if (PC.authorization(m_Login, currentPassword, false) == 1)
 		{
