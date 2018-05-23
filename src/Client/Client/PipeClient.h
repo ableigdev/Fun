@@ -3,6 +3,9 @@
 #include <windows.h>
 #include <cstdlib>
 #include <string>
+#include <iostream> 
+#include <future>
+#include <chrono>
 
 template <typename T>
 class CPipeClient
@@ -12,6 +15,8 @@ class CPipeClient
     Описание недоступного пользователю поля, в котором будет храниться дескриптор именованного канала
     */
 
+    OVERLAPPED osReadOperation;
+    int rec_deep;
 
     HANDLE hPipe;
 
@@ -22,6 +27,7 @@ public:
     CPipeClient()
     {
         hPipe = INVALID_HANDLE_VALUE;
+        rec_deep = 0;
     }
 
 
@@ -61,25 +67,29 @@ public:
                 0,
                 NULL,
                 OPEN_EXISTING,
-                0,
+                FILE_FLAG_OVERLAPPED,
                 NULL
             );
 
             if (!IsPipeConnected())
             {
+                //не вижу смысла в следующем коде, так как в любом случае возвращаем ошибку. \
+                    Зачем дожидатсья освобождения сервера, чтобы выдать ошибку?
+                /*
                 if (GetLastError() == ERROR_PIPE_BUSY)
                 {
-                    /*
-                    Если подключение не произошло по причине занятости сервера, то выполнение ожидания его
-                    освобождения (в случае неудачности ожидания   выход) и переход на повторное подключение
-                    */
+                    
+                    //Если подключение не произошло по причине занятости сервера, то выполнение ожидания его
+                    //освобождения (в случае неудачности ожидания   выход) и переход на повторное подключение
+                    
 
                     if (!WaitNamedPipe(wPipeName.c_str(), WaitInfinite ? NMPWAIT_WAIT_FOREVER : NMPWAIT_USE_DEFAULT_WAIT))
                         return false;
                 }
                 else
                     // Другая ошибка при подключении, следовательно, оно не удалось
-                    return false;
+                    return false;*/
+                return false;
             }
             else
                 // Удачное подключение
@@ -129,10 +139,95 @@ public:
         {
             DWORD NBytesRead;
             short int Message;
-            if (ReadFile(hPipe, &Message, sizeof(Message), &NBytesRead, NULL) == TRUE)
+            
+            /*if (ReadFile(hPipe, &Message, sizeof(Message), &NBytesRead, NULL) == TRUE)
             {
+                std::cout << NBytesRead << "\t" << Message << "\t\n";
+                return Message;
+            }*/
+
+            //--------------------------------------------------------------------------
+            bool fOverlapped = FALSE;
+
+
+            if (!ReadFile(hPipe, &Message, sizeof(Message), &NBytesRead, &osReadOperation))
+            {
+                if (GetLastError() != ERROR_IO_PENDING)
+                {
+                    // Some other error occurred while reading the file.
+                    return -1;
+                }
+                else
+                {
+                    fOverlapped = TRUE;
+                }
+            }
+            else
+            {
+                // Operation has completed immediately.
+                fOverlapped = FALSE;
+                std::cout << "immediately message " << Message << std::endl;
                 return Message;
             }
+
+            if (fOverlapped)
+            {
+                int time = clock() + 500;
+                while (clock() < time)
+                {
+                    if (GetOverlappedResult(hPipe, &osReadOperation, &NBytesRead, FALSE))
+                    {
+                        //ReadHasCompleted(NumberOfBytesTransferred);
+                        if (Message < -13)
+                        {
+                            return -2;
+                        }
+                        return Message;
+                    }
+                    else
+                    {
+                        if (GetLastError() == ERROR_IO_INCOMPLETE)
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            // Operation has completed, but it failed.
+                            return -1;
+                        }
+
+                    }
+                }
+                return -2;
+                // Wait for the operation to complete before continuing.
+                // You could do some background work if you wanted to.
+                
+            }
+            else
+            {
+                std::cout << NBytesRead << "\t" << Message << "\t\n";
+                return Message;
+            }
+                
+            //--------------------------------------------------------------------------
+            
+            //DWORD avail;
+            //bool bSuccess = FALSE;
+            //bool tSuccess = FALSE;
+
+            //tSuccess = PeekNamedPipe(hPipe, NULL, 0, NULL, &avail, NULL);
+
+            //if (tSuccess && avail > 0)
+            //{
+
+            //if (ReadFile(hPipe, &Message, sizeof(Message), &NBytesRead, NULL) == TRUE)
+            //{
+              //  return Message;
+            //}
+            //}
+            //std::cout << tSuccess << "\t" << avail << "\t\n";
+            
+
         }
         return -1;
     }
@@ -160,8 +255,10 @@ public:
         {
             std::cout << "\nОшибка записи в именованный канал!\n";
         }
+        int res = 0;
 
-        switch (ReadResponse())
+        int choose = ReadResponse();
+        switch (choose)
         {
         case 0:
         {
@@ -184,9 +281,20 @@ public:
             hPipe = INVALID_HANDLE_VALUE;
             return -1;
         }
+        case -2:
+            // Если данные були утеряны в процессе передачи данных
+            rec_deep++;
+            Sleep(5);
+            //std::cout << "rec_deep = " << rec_deep << std::endl;
+            res = (rec_deep < 5 ? authorization(login, password, false) : -1);
+            rec_deep--;
+            return res;
+        case -3:
+            std::cout << "\nпустые данные от сервера! ( " << choose << " )" << std::endl;
+            break;
         default:
         {
-            std::cout << "\nНеизвестная ошибка!" << std::endl;
+            std::cout << "\nНеизвестная ошибка! ( " << choose << " )" << std::endl;
             break;
         }
         }

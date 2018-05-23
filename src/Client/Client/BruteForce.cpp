@@ -4,6 +4,8 @@
 #include <Windows.h>
 #include <ctime>
 
+#define DEBUG_MODE 1
+
 BruteForce::BruteForce()
 	: m_PasswordLength(0)
 {
@@ -41,7 +43,8 @@ std::string BruteForce::getAlphabet(int value)
 	{
 		case 1:
 		{
-			return " qwertyuiopasdfghjklzxcvbnm";
+			//return " qwertyuiopasdfghjklzxcvbnm";
+            return " paswertyuiodfghjklzxcvbnm";
 		}
 		case 2:
 		{
@@ -61,6 +64,11 @@ std::string BruteForce::getAlphabet(int value)
 
 void BruteForce::brute(CPipeClient<char>& PC)
 {
+
+    if (DEBUG_MODE)
+    {
+        std::cout << "< DEBUG_MODE >" << std::endl;
+    }
 
 	std::vector<int> indexer{};
 	indexer.resize(m_PasswordLength);
@@ -91,6 +99,11 @@ void BruteForce::brute(CPipeClient<char>& PC)
 		{
 			currentPassword[i] = m_Alphabet[indexer[(m_PasswordLength - 1) - i]];
 		}
+
+        if (DEBUG_MODE)
+        {
+            std::cout << currentPassword << std::endl;
+        }
 
 		if (PC.authorization(m_Login, currentPassword, false) == 1)
 		{

@@ -137,11 +137,12 @@ int main()
         */
         std::cout << "Ожидание подключения клиентов..." << std::endl;
 		
-		int counter = 0;
+		int counter = 0; // счетчик активного канала
+        bool oneChannelAlive; // флаг проверки активности хотя-бы одного канала
         do
         {
-            
-            Message.resize(100);
+            oneChannelAlive = false; // обнуление флага
+            Message.resize(100); 
             
             /*
             Ожидания перехода в свободное состояние события, связанного с каким-то из каналов,
@@ -149,21 +150,47 @@ int main()
             При этом функция WaitForMultipleObjects состояние события с ручным сбросом
             АВТОМАТИЧЕСКИ НЕ ИЗМЕНЯЕТ.
             */
-			
-			PipeNumber = WaitForSingleObject(hEvents[counter], 15);
-
-            if (PipeNumber < MAX_PIPE_INST)
+            for (int i = counter, j = 0; j < MAX_PIPE_INST ; j++) // перебираем каналы для работы с ними
             {
-				if (PipeNumber != counter)
+                int var = WaitForSingleObject(hEvents[i], 15); // 258 - timedOut  \ 128 - abadoned  \ 0 - WAIT_OBJECT_0 \ 4294967295 - failed
+                if (var == WAIT_OBJECT_0)
+                {
+                    counter = i;
+                    PipeNumber = counter;
+                    oneChannelAlive = true;
+                    break;
+                }
+                i < MAX_PIPE_INST - 1 ? i++ : i = 0;
+            }
+
+            if (!oneChannelAlive) // если все каналы молчат - ждем хоть кого-то
+            {
+                //PipeNumber = WaitForSingleObject(hEvents[counter], 15);
+                PipeNumber = WaitForMultipleObjects(MAX_PIPE_INST, hEvents, false, 1500) - WAIT_OBJECT_0;
+                if (PipeNumber == 258)
+                {
+                    continue;
+                }
+                //std::cout << "ActivePipe: " << PipeNumber;
+                counter = PipeNumber;
+            }
+            std::cout << "ActivePipe: " << PipeNumber << std::endl;
+
+            if (PipeNumber < MAX_PIPE_INST) // проверка на выход из допустимых пределов кол-ва каналов
+            {
+				/*
+                //эта проверка слегка нарушает логику использования ожидания single и multiple объектов
+                if (PipeNumber != counter)
 				{
 					PipeNumber = counter;
-				}
+				}*/
 
 				if (!file.is_open())
 				{
 					file.open(FName);
 				}
 
+                // считывание паролей 
 				Pipes[PipeNumber].readFromDB(file);
 				file.close();
 
@@ -354,8 +381,6 @@ int main()
 				}
             }
 
-            
-
 			if (counter < MAX_PIPE_INST - 1)
 			{
 				++counter;
@@ -364,7 +389,6 @@ int main()
 			{
 				counter = 0;
 			}
-
         } while (1);
 
         /*
