@@ -1,11 +1,16 @@
+#define _CRT_SECURE_NO_WARNINGS
 #pragma once
 
-#include "list.h"
 #include <iostream>
+#include <vector>
+#include <cstdlib>
+#include <string>
+
+#include "User.h"
 
 //-----------------------------------------------------------------------
 
-#define	NELEM	3
+#define MAX_LOG_PASS_LENGTH 50
 
 template <typename T> 
 class PerPipeStruct
@@ -21,17 +26,10 @@ private:
 	записываются полученные из потока значения, кратные заданному делителю в заданном
 	диапазоне
 	*/
-
-	T ControlVals[NELEM];
-	unsigned ControlInd;
-	TList<T> List;
+		
+	std::vector<User<T>> data;
 
 public:
-
-	PerPipeStruct()
-	{
-		ClearData();
-	}
 
 	//---------------------------------------------------------------
 	/*
@@ -39,13 +37,9 @@ public:
 	записывает очередное значение или в массив ControlVals, или в список.
 	*/
 
-	void ReadVal(T Val)
+	void ReadVal(std::basic_string<T> str)
 	{
-		if (ControlInd < NELEM)
-			ControlVals[ControlInd++] = Val;
-		else
-			List.AddAfterTail(Val);
-
+		data.push_back(parseString(str));
 	}
 
 	//---------------------------------------------------------------
@@ -55,29 +49,53 @@ public:
 
 	void ClearData()
 	{
-		for (ControlInd = 0; ControlInd < NELEM; ControlInd++)
-			ControlVals[ControlInd] = 0;
-		ControlInd = 0;
-		List.DelAllElem();
+		data.clear();
+	}
+
+	User<T> parseString(std::basic_string<T> str)
+	{
+		User<T> user;
+		size_t index = str.find_first_of("/");
+        size_t eOF = str.find('\0');
+		user.login = str.substr(0, index);
+		user.password = str.substr(index + 1, eOF - (index + 1)); //looks like a shit :D
+
+		return user;
+	}
+
+	std::vector<User<T>> getData() const
+	{
+		return data;
 	}
 
 	//---------------------------------------------------------------
 	template <typename T>
-	friend std::ostream& operator << (std::ostream &os, PerPipeStruct<T> &Val);
+	friend std::ostream& operator << (std::ostream&, PerPipeStruct<T>&);
+
+	template <typename T>
+	friend std::wostream& operator << (std::wostream&, PerPipeStruct<T>&);
 };
 
 //-----------------------------------------------------------------------
 
 template <typename T> 
-std::ostream& operator << (std::ostream &os, PerPipeStruct<T> &Val)
+std::ostream& operator << (std::ostream& ostream, PerPipeStruct<T>& right)
 {
-	if (Val.ControlInd > 0)
+	for (size_t i = 0; i < right.data.size(); ++i)
 	{
-		os << std::endl << "Начальное значение, конечное значение, шаг:" << std::endl;
-		os << Val.ControlVals[0] << " " << Val.ControlVals[1] << " " << Val.ControlVals[2] << std::endl;
-		os << "Числовые значения: " << std::endl;
-		os << Val.List;
+		ostream << right.data[i] << " ";
 	}
 
-	return os;
+	return ostream;
+}
+
+template <typename T>
+std::wostream& operator << (std::wostream& wostream, PerPipeStruct<T>& right)
+{
+	for (size_t i = 0; i < right.data.size(); ++i)
+	{
+		wostream << right.data[i] << " ";
+	}
+
+	return wostream;
 }

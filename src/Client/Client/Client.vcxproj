@@ -154,9 +154,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BruteForce.h" />
     <ClInclude Include="PipeClient.h" />
+    <ClInclude Include="Rules.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BruteForce.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

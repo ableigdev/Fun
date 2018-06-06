@@ -2,133 +2,253 @@
 
 #include <windows.h>
 #include <cstdlib>
+#include <string>
+#include <iostream> 
+#include <future>
+#include <chrono>
 
-template <typename T> 
+template <typename T>
 class CPipeClient
 {
 
-	/*
-	Описание недоступного пользователю поля, в котором будет храниться дескриптор именованного канала
-	*/
+    /*
+    Описание недоступного пользователю поля, в котором будет храниться дескриптор именованного канала
+    */
 
+    OVERLAPPED osReadOperation;
+    int rec_deep;
 
-	HANDLE hPipe;
+    HANDLE hPipe;
 
-	//------------------------------------------------------------------
+    //------------------------------------------------------------------
 
 public:
 
-	CPipeClient()
-	{
-		hPipe = INVALID_HANDLE_VALUE;
-	}
+    CPipeClient()
+    {
+        hPipe = INVALID_HANDLE_VALUE;
+        rec_deep = 0;
+    }
 
 
-	~CPipeClient()
-	{
-		if (hPipe != INVALID_HANDLE_VALUE)
-			CloseHandle(hPipe);
-	}
+    ~CPipeClient()
+    {
+        if (hPipe != INVALID_HANDLE_VALUE)
+            CloseHandle(hPipe);
+    }
 
-	//------------------------------------------------------------------
-	/*
-	Доступный пользователю метод, с помощью которого осуществляется попытка открытия
-	именованного канала с указанным именем (аргумент PipeName) с помощью функции CreateFile
-	для записи в него данных. Далее в случае необходимости выполняется ожидание готовности
-	сервера в течение указанного промежутка времени (если аргумент WaitInfinite равен false,
-	то происходит бесконечное ожидание, а в противном случае ожидание выполняется в течение
-	времени, указанного при создании экземпляра потока сервером).
-	*/
+    //------------------------------------------------------------------
+    /*
+    Доступный пользователю метод, с помощью которого осуществляется попытка открытия
+    именованного канала с указанным именем (аргумент PipeName) с помощью функции CreateFile
+    для записи в него данных. Далее в случае необходимости выполняется ожидание готовности
+    сервера в течение указанного промежутка времени (если аргумент WaitInfinite равен false,
+    то происходит бесконечное ожидание, а в противном случае ожидание выполняется в течение
+    времени, указанного при создании экземпляра потока сервером).
+    */
 
-	bool ConnectPipe(char *PipeName, bool WaitInfinite = false)
-	{
-		/*
-		Бесконечный цикл попыток подключения
-		*/
-		do
-		{
-			/*
-			Попытка подключения к каналу
-			*/
-			size_t sizePipe = strlen(PipeName) + 1;
+    bool ConnectPipe(char *PipeName, bool WaitInfinite = false)
+    {
+        /*
+        Бесконечный цикл попыток подключения
+        */
+        do
+        {
+            /*
+            Попытка подключения к каналу
+            */
+            size_t sizePipe = strlen(PipeName) + 1;
 
-			std::wstring wPipeName(sizePipe, L'#');
-			mbstowcs(&wPipeName[0], PipeName, sizePipe);
+            std::wstring wPipeName(sizePipe, L'#');
+            mbstowcs(&wPipeName[0], PipeName, sizePipe);
 
-			hPipe = CreateFile(wPipeName.c_str(),
-				GENERIC_WRITE,
-				0,
-				NULL,
-				OPEN_EXISTING,
-				0,
-				NULL
-			);
+            hPipe = CreateFile(wPipeName.c_str(),
+                GENERIC_READ | GENERIC_WRITE,
+                0,
+                NULL,
+                OPEN_EXISTING,
+                FILE_FLAG_OVERLAPPED,
+                NULL
+            );
 
-			if (!IsPipeConnected())
-			{
-				if (GetLastError() == ERROR_PIPE_BUSY)
-				{
-					/*
-					Если подключение не произошло по причине занятости сервера, то выполнение ожидания его
-					освобождения (в случае неудачности ожидания   выход) и переход на повторное подключение
-					*/
+            if (!IsPipeConnected())
+            {
+                return false;
+            }
+            else
+                // Удачное подключение
+                break;
+        } while (1);
 
-					if (!WaitNamedPipe(wPipeName.c_str(), WaitInfinite ? NMPWAIT_WAIT_FOREVER : NMPWAIT_USE_DEFAULT_WAIT))
-						return false;
-				}
-				else
-					// Другая ошибка при подключении, следовательно, оно не удалось
-					return false;
-			}
-			else
-				// Удачное подключение
-				break;
-		} while (1);
+        return true;
+    }
 
-		return true;
-	}
+    //------------------------------------------------------------------
+    /*
+    Доступный пользователю метод, с помощью которого осуществляется попытка перевода канала,
+    если подключение к нему выполнено успешно, в режим сообщений
+    */
 
-	//------------------------------------------------------------------
-	/*
-	Доступный пользователю метод, с помощью которого осуществляется попытка перевода канала,
-	если подключение к нему выполнено успешно, в режим сообщений
-	*/
+    bool InitMessageMode()
+    {
+        if (IsPipeConnected())
+        {
+            DWORD Mode = PIPE_READMODE_MESSAGE;
+            return SetNamedPipeHandleState(hPipe, &Mode, NULL, NULL) == TRUE;
+        }
+        return false;
+    }
 
-	bool InitMessageMode()
-	{
-		if (IsPipeConnected())
-		{
-			DWORD Mode = PIPE_READMODE_MESSAGE;
-			return SetNamedPipeHandleState(hPipe, &Mode, NULL, NULL) == TRUE;
-		}
-		return false;
-	}
+    //------------------------------------------------------------------
+    /*
+    Доступный пользователю метод, с помощью которого осуществляется попытка записи данных в
+    канал, если подключение к нему выполнено успешно.
+    */
 
-	//------------------------------------------------------------------
-	/*
-	Доступный пользователю метод, с помощью которого осуществляется попытка записи данных в
-	канал, если подключение к нему выполнено успешно.
-	*/
+    bool WriteMessage(const std::basic_string<T> &Message)
+    {
+        if (IsPipeConnected())
+        {
+            DWORD NBWr;
+            return WriteFile(hPipe, &Message.at(0), sizeof(Message), &NBWr, NULL) == TRUE;
+        }
+        return false;
+    }
 
-	bool WriteMessage(T &Message)
-	{
-		if (IsPipeConnected())
-		{
-			DWORD NBWr;
-			return WriteFile(hPipe, (LPVOID)(&Message), sizeof(Message), &NBWr, NULL) == TRUE;
-		}
-		return false;
-	}
+    //------------------------------------------------------------------
 
-	//------------------------------------------------------------------
-	/*
-	Доступный пользователю метод, с помощью которого осуществляется проверка удачности
-	подключения к экземпляру именованного канала
-	*/
+    short int ReadResponse()
+    {
+        if (IsPipeConnected())
+        {
+            DWORD NBytesRead;
+            short int Message;
 
-	bool IsPipeConnected()
-	{
-		return hPipe != INVALID_HANDLE_VALUE;
-	}
+            bool fOverlapped = FALSE;
+
+
+            if (!ReadFile(hPipe, &Message, sizeof(Message), &NBytesRead, &osReadOperation))
+            {
+                if (GetLastError() != ERROR_IO_PENDING)
+                {
+                    // Some other error occurred while reading the file.
+                    return -1;
+                }
+                else
+                {
+                    fOverlapped = TRUE;
+                }
+            }
+            else
+            {
+                // Operation has completed immediately.
+                fOverlapped = FALSE;
+                return Message;
+            }
+
+            if (fOverlapped)
+            {
+                int time = clock() + 100;
+                while (clock() < time)
+                {
+                    if (GetOverlappedResult(hPipe, &osReadOperation, &NBytesRead, FALSE))
+                    {
+                        if (Message < -13)
+                        {
+                            return -2;
+                        }
+                        return Message;
+                    }
+                    else
+                    {
+                        if (GetLastError() == ERROR_IO_INCOMPLETE)
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            return -1;
+                        }
+
+                    }
+                }
+                return -2;
+            }
+            else
+            {
+                std::cout << NBytesRead << "\t" << Message << "\t\n";
+                return Message;
+            }
+        }
+        return -1;
+    }
+    /*
+    Доступный пользователю метод, с помощью которого осуществляется проверка удачности
+    подключения к экземпляру именованного канала
+    */
+
+    bool IsPipeConnected()
+    {
+        return hPipe != INVALID_HANDLE_VALUE;
+    }
+
+    //------------------------------------------------------------------
+    /*
+    Доступный пользователю метод, с помощью которого осуществляется подключение к серверу и передача
+    */
+    int authorization(const std::basic_string<T>& login, const std::basic_string<T>& password, bool outputFlag = true)
+    {
+        std::basic_string<T> str(login + "/" + password);
+        int choose = -2;
+        while (choose == -2)
+        {
+            if (!(WriteMessage(str)))
+            {
+                std::cout << "\nОшибка записи в именованный канал!\n";
+            }
+            int res = 0;
+
+            choose = ReadResponse();
+            switch (choose)
+            {
+                case 0:
+                {
+                    if (outputFlag)
+                        std::cout << "\nНеверный пароль или логин!\n";
+                    return 0;
+                }
+
+                case 1:
+                {
+                    std::cout << "\nАвторизация прошла успешно!\n";
+                    hPipe = INVALID_HANDLE_VALUE;
+                    return 1;
+                }
+
+                case -1:
+                {
+                    std::cout << "\nКоличество попыток подключения исчерпано!" << std::endl;
+
+                    hPipe = INVALID_HANDLE_VALUE;
+                    return -1;
+                }
+
+                case -2:
+                    // i know, here must be some code, but... it works faster without it :D
+                    break;
+                case -3:
+                    std::cout << "\nпустые данные от сервера! ( " << choose << " )" << std::endl;
+                    break;
+                default:
+                {
+                    std::cout << "\nНеизвестная ошибка! ( " << choose << " )" << std::endl;
+                    break;
+                }
+            }
+        }
+        
+    }
+
+    //------------------------------------------------------------------
 
 };
